@@ -60,6 +60,7 @@ const demoTheme = createTheme({
 });
 
 function DemoPageContent({ pathname }) {
+  const userdata=localStorage.getItem("userdata");
   return (
     <Box
       sx={{
@@ -70,9 +71,9 @@ function DemoPageContent({ pathname }) {
         textAlign: 'center',
       }}
     >
-     {pathname=="/Task" ?<Task/>:
+     {pathname=="/Task" && userdata.role=="User" ?<Task/>:
      pathname=="/User"?<User/>:
-     (<><h1>{pathname}</h1></>)}
+     (<><h1> </h1></>)}
     </Box>
   );
 }

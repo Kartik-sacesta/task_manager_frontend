@@ -14,8 +14,8 @@ function App() {
     try {
       const res = await axios.post("http://localhost:5000/user/me", { token });
       console.log(res);
-      const userdata={role:res.data.roletitle,username:res.data.userdata}
-      localStorage.setItem("userdata", userdata);
+      const userdata = { role: res.data.roletitle, username: res.data.username };
+      localStorage.setItem("userdata", JSON.stringify(userdata));
       
       setauthorized(true);
     } catch (e) {
