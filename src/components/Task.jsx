@@ -32,6 +32,9 @@ import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
 import { visuallyHidden } from "@mui/utils";
 import axios from "axios";
+import FormControl from "@mui/material/FormControl";
+import InputLabel from "@mui/material/InputLabel";
+import Select from "@mui/material/Select";
 
 const headCells = [
   {
@@ -59,6 +62,12 @@ const headCells = [
     label: "Status",
   },
   {
+    id: "priority",
+    numeric: false,
+    disablePadding: false,
+    label: "Priority",
+  },
+  {
     id: "actions",
     numeric: false,
     disablePadding: false,
@@ -70,6 +79,15 @@ const statusOptions = [
   { value: "pending", label: "Pending" },
   { value: "in-progress", label: "In Progress" },
   { value: "completed", label: "Completed" },
+  { value: "cancelled", label: "Cancelled" },
+];
+
+const priorityOptions = [
+  { value: "All", label: "All Priorities" },
+  { value: "Low", label: "Low" },
+  { value: "Medium", label: "Medium" },
+  { value: "High", label: "High" },
+  { value: "Urgent", label: "Urgent" },
 ];
 
 function descendingComparator(a, b, orderBy) {
@@ -157,7 +175,7 @@ EnhancedTableHead.propTypes = {
 };
 
 function EnhancedTableToolbar(props) {
-  const { numSelected, onCreateTask, onDeleteSelected } = props;
+  const { numSelected, onCreateTask, onDeleteSelected, deleteLoading, priorityFilter, onPriorityFilterChange } = props;
 
   return (
     <Toolbar
@@ -194,10 +212,31 @@ function EnhancedTableToolbar(props) {
           Tasks
         </Typography>
       )}
+      <FormControl sx={{ m: 1, minWidth: 120 }} size="small">
+        <InputLabel id="priority-filter-label">Priority</InputLabel>
+        <Select
+          labelId="priority-filter-label"
+          id="priority-filter-select"
+          value={priorityFilter}
+          label="Priority"
+          onChange={onPriorityFilterChange}
+        >
+          {priorityOptions.map((option) => (
+            <MenuItem key={option.value} value={option.value}>
+              {option.label}
+            </MenuItem>
+          ))}
+        </Select>
+      </FormControl>
       {numSelected > 0 ? (
         <Tooltip title="Delete">
-          <IconButton onClick={onDeleteSelected}>
-            <DeleteIcon />
+          <IconButton onClick={onDeleteSelected} disabled={deleteLoading}>
+            {deleteLoading ? (
+              <CircularProgress size={24} />
+            ) : (
+              <DeleteIcon />
+            )}
+            
           </IconButton>
         </Tooltip>
       ) : (
@@ -220,6 +259,9 @@ EnhancedTableToolbar.propTypes = {
   numSelected: PropTypes.number.isRequired,
   onCreateTask: PropTypes.func.isRequired,
   onDeleteSelected: PropTypes.func.isRequired,
+  deleteLoading: PropTypes.bool.isRequired,
+  priorityFilter: PropTypes.string.isRequired,
+  onPriorityFilterChange: PropTypes.func.isRequired,
 };
 
 function CreateTaskModal({
@@ -235,6 +277,7 @@ function CreateTaskModal({
     description: "",
     expiredDate: "",
     status: "pending",
+    priority: "Medium",
   });
   const [errors, setErrors] = React.useState({});
 
@@ -246,9 +289,10 @@ function CreateTaskModal({
         expiredDate: initialData.expiredDate
           ? initialData.expiredDate.split("T")[0]
           : initialData.expried_date
-            ? initialData.expried_date.split("T")[0]
-            : "",
+          ? initialData.expried_date.split("T")[0]
+          : "",
         status: initialData.status || "pending",
+        priority: initialData.priority || "Medium",
       });
     } else {
       setFormData({
@@ -256,6 +300,7 @@ function CreateTaskModal({
         description: "",
         expiredDate: "",
         status: "pending",
+        priority: "Medium",
       });
     }
     setErrors({});
@@ -318,6 +363,7 @@ function CreateTaskModal({
       description: "",
       expiredDate: "",
       status: "pending",
+      priority: "Medium",
     });
     setErrors({});
     onClose();
@@ -391,6 +437,23 @@ function CreateTaskModal({
               ))}
             </TextField>
           </Grid>
+
+          <Grid item xs={12} sm={6}>
+            <TextField
+              fullWidth
+              label="Priority"
+              select
+              value={formData.priority}
+              onChange={handleChange("priority")}
+              disabled={loading}
+            >
+              {priorityOptions.slice(1).map((option) => ( // Exclude "All" from Create/Edit modal
+                <MenuItem key={option.value} value={option.value}>
+                  {option.label}
+                </MenuItem>
+              ))}
+            </TextField>
+          </Grid>
         </Grid>
       </DialogContent>
       <DialogActions>
@@ -408,8 +471,8 @@ function CreateTaskModal({
               ? "Saving..."
               : "Creating..."
             : edit
-              ? "Save Changes"
-              : "Create Task"}
+            ? "Save Changes"
+            : "Create Task"}
         </Button>
       </DialogActions>
     </Dialog>
@@ -423,6 +486,34 @@ CreateTaskModal.propTypes = {
   loading: PropTypes.bool.isRequired,
   edit: PropTypes.bool.isRequired,
   initialData: PropTypes.object,
+};
+
+function ConfirmationDialog({ open, title, message, onConfirm, onCancel, loading }) {
+  return (
+    <Dialog open={open} onClose={onCancel} maxWidth="xs" fullWidth>
+      <DialogTitle>{title}</DialogTitle>
+      <DialogContent>
+        <Typography>{message}</Typography>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onCancel} disabled={loading}>
+          Cancel
+        </Button>
+        <Button onClick={onConfirm} color="error" variant="contained" disabled={loading}>
+          {loading ? <CircularProgress size={16} /> : "Confirm"}
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+}
+
+ConfirmationDialog.propTypes = {
+  open: PropTypes.bool.isRequired,
+  title: PropTypes.string.isRequired,
+  message: PropTypes.string.isRequired,
+  onConfirm: PropTypes.func.isRequired,
+  onCancel: PropTypes.func.isRequired,
+  loading: PropTypes.bool.isRequired,
 };
 
 export default function EnhancedTable() {
@@ -444,21 +535,33 @@ export default function EnhancedTable() {
     message: "",
     severity: "success",
   });
+  const [confirmDialogOpen, setConfirmDialogOpen] = React.useState(false);
+  const [priorityFilter, setPriorityFilter] = React.useState('All'); // New state for priority filter
 
-  // Fetch tasks from API
+  const showSnackbar = (message, severity = "success") => {
+    setSnackbar({
+      open: true,
+      message,
+      severity,
+    });
+  };
+
+  const handleCloseSnackbar = () => {
+    setSnackbar((prev) => ({ ...prev, open: false }));
+  };
+
   const fetchTasks = React.useCallback(async () => {
     setLoading(true);
     try {
       const token = localStorage.getItem("authtoken");
-      const response = await fetch("http://localhost:5000/task", {
+      const response = await axios.get("http://localhost:5000/task", {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
 
-      if (response.ok) {
-        const data = await response.json();
-        setRows(Array.isArray(data) ? data : []);
+      if (response.status === 200) {
+        setRows(Array.isArray(response.data) ? response.data : []);
       } else {
         throw new Error("Failed to fetch tasks");
       }
@@ -475,17 +578,6 @@ export default function EnhancedTable() {
     fetchTasks();
   }, [fetchTasks]);
 
-  const showSnackbar = (message, severity = "success") => {
-    setSnackbar({
-      open: true,
-      message,
-      severity,
-    });
-  };
-
-  const handleCloseSnackbar = () => {
-    setSnackbar((prev) => ({ ...prev, open: false }));
-  };
   const handleCreateTask = async (taskData) => {
     setCreateLoading(true);
     try {
@@ -563,6 +655,10 @@ export default function EnhancedTable() {
   const handleDeleteSelected = async () => {
     if (selected.length === 0) return;
 
+    setConfirmDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
     setDeleteLoading(true);
     try {
       const token = localStorage.getItem("authtoken");
@@ -596,6 +692,7 @@ export default function EnhancedTable() {
       );
     } finally {
       setDeleteLoading(false);
+      setConfirmDialogOpen(false);
     }
   };
 
@@ -659,24 +756,50 @@ export default function EnhancedTable() {
     switch (status) {
       case "completed":
         return "success";
-      case "in_progress":
+      case "in-progress":
         return "warning";
       case "cancelled":
         return "error";
       default:
-        return "default";
+        return "primary";
     }
   };
 
+  const getPriorityColor = (priority) => {
+    switch (priority) {
+      case "Low":
+        return "success";
+      case "Medium":
+        return "warning";
+      case "High":
+      case "Urgent":
+        return "error";
+      default:
+        return "primary";
+    }
+  };
+
+  const handlePriorityFilterChange = (event) => {
+    setPriorityFilter(event.target.value);
+    setPage(0); // Reset page when filter changes
+  };
+
+  const filteredRows = React.useMemo(() => {
+    if (priorityFilter === 'All') {
+      return rows;
+    }
+    return rows.filter(row => row.priority === priorityFilter);
+  }, [rows, priorityFilter]);
+
   const emptyRows =
-    page > 0 ? Math.max(0, (1 + page) * rowsPerPage - rows.length) : 0;
+    page > 0 ? Math.max(0, (1 + page) * rowsPerPage - filteredRows.length) : 0;
 
   const visibleRows = React.useMemo(
     () =>
-      [...(Array.isArray(rows) ? rows : [])]
+      [...(Array.isArray(filteredRows) ? filteredRows : [])]
         .sort(getComparator(order, orderBy))
         .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage),
-    [rows, order, orderBy, page, rowsPerPage]
+    [filteredRows, order, orderBy, page, rowsPerPage]
   );
 
   const handleOpenEditModal = (row) => {
@@ -705,6 +828,9 @@ export default function EnhancedTable() {
             setModalOpen(true);
           }}
           onDeleteSelected={handleDeleteSelected}
+          deleteLoading={deleteLoading}
+          priorityFilter={priorityFilter}
+          onPriorityFilterChange={handlePriorityFilterChange}
         />
         <TableContainer>
           <Table
@@ -718,18 +844,18 @@ export default function EnhancedTable() {
               orderBy={orderBy}
               onSelectAllClick={handleSelectAllClick}
               onRequestSort={handleRequestSort}
-              rowCount={rows.length}
+              rowCount={filteredRows.length}
             />
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={6} align="center">
+                  <TableCell colSpan={7} align="center">
                     <CircularProgress />
                   </TableCell>
                 </TableRow>
               ) : visibleRows.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} align="center">
+                  <TableCell colSpan={7} align="center">
                     No tasks found.
                   </TableCell>
                 </TableRow>
@@ -798,6 +924,23 @@ export default function EnhancedTable() {
                         </Box>
                       </TableCell>
                       <TableCell align="left">
+                        <Box
+                          sx={{
+                            px: 1,
+                            py: 0.5,
+                            borderRadius: 1,
+                            bgcolor: `${getPriorityColor(row.priority)}.light`,
+                            color: `${getPriorityColor(row.priority)}.dark`,
+                            textTransform: "capitalize",
+                            fontSize: "0.75rem",
+                            fontWeight: "medium",
+                            display: "inline-block",
+                          }}
+                        >
+                          {row.priority}
+                        </Box>
+                      </TableCell>
+                      <TableCell align="left">
                         <Tooltip title="Edit">
                           <IconButton
                             size="small"
@@ -820,7 +963,7 @@ export default function EnhancedTable() {
                     height: 53 * emptyRows,
                   }}
                 >
-                  <TableCell colSpan={6} />
+                  <TableCell colSpan={7} />
                 </TableRow>
               )}
             </TableBody>
@@ -829,7 +972,7 @@ export default function EnhancedTable() {
         <TablePagination
           rowsPerPageOptions={[5, 10, 25]}
           component="div"
-          count={rows.length}
+          count={filteredRows.length}
           rowsPerPage={rowsPerPage}
           page={page}
           onPageChange={handleChangePage}
@@ -844,6 +987,15 @@ export default function EnhancedTable() {
         loading={createLoading}
         edit={edit}
         initialData={editTaskData}
+      />
+
+      <ConfirmationDialog
+        open={confirmDialogOpen}
+        title="Confirm Deletion"
+        message={`Are you sure you want to delete ${selected.length} selected task(s)? This action cannot be undone.`}
+        onConfirm={confirmDelete}
+        onCancel={() => setConfirmDialogOpen(false)}
+        loading={deleteLoading}
       />
 
       <Snackbar
@@ -863,4 +1015,3 @@ export default function EnhancedTable() {
     </Box>
   );
 }
- 

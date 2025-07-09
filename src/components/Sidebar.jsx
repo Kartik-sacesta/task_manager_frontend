@@ -1,193 +1,235 @@
-import * as React from 'react';
-import PropTypes from 'prop-types';
-import Box from '@mui/material/Box';
-import FormControlLabel from '@mui/material/FormControlLabel';
-import FormControl from '@mui/material/FormControl';
-import FormLabel from '@mui/material/FormLabel';
-import IconButton from '@mui/material/IconButton';
-import Popover from '@mui/material/Popover';
-import Radio from '@mui/material/Radio';
-import RadioGroup from '@mui/material/RadioGroup';
-import Stack from '@mui/material/Stack';
-import Tooltip from '@mui/material/Tooltip';
-import Typography from '@mui/material/Typography';
-import { createTheme, useColorScheme } from '@mui/material/styles';
-import DashboardIcon from '@mui/icons-material/Dashboard';
-import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
-import SettingsIcon from '@mui/icons-material/Settings';
-import { AppProvider } from '@toolpad/core/AppProvider';
-import { DashboardLayout } from '@toolpad/core/DashboardLayout';
-import { Account } from '@toolpad/core/Account';
-import { DemoProvider, useDemoRouter } from '@toolpad/core/internal';
-import Task from './Task';
-import User from './User';
+import React from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import {
+  Box,
+  Drawer,
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  Typography,
+  Divider,
+  Chip,
+  Button,
+  Avatar,
+  Stack,
+  useTheme,
+  Paper,
+} from "@mui/material";
+import {
+  Dashboard as DashboardIcon,
+  People as PeopleIcon,
+  Task as TaskIcon,
+  Logout as LogoutIcon,
 
-const NAVIGATION = [
-  {
-    kind: 'header',
-    title: 'Main items',
-  },
-  {
-    segment: 'dashboard',
-    title: 'Dashboard',
-    icon: <DashboardIcon />,
-  },
-  {
-    segment: 'User',
-    title: 'User',
-    
-  },
-  {
-    segment:"Task",
-    title:"Task",
-  }
-];
+} from "@mui/icons-material";
+import NotificationsIcon from '@mui/icons-material/Notifications';
+const SIDEBAR_WIDTH = 280;
 
-const demoTheme = createTheme({
-  cssVariables: {
-    colorSchemeSelector: 'data-toolpad-color-scheme',
-  },
-  colorSchemes: { light: true, dark: true },
-  breakpoints: {
-    values: {
-      xs: 0,
-      sm: 600,
-      md: 600,
-      lg: 1200,
-      xl: 1536,
+const Sidebar = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const theme = useTheme();
+
+  const userdata = JSON.parse(localStorage.getItem("userdata") || "{}");
+
+  const menuItems = [
+    {
+      path: "/user",
+      label: "Users",
+      icon: <PeopleIcon />,
+      roles: ["Admin"],
     },
-  },
-});
+    {
+      path: "/task",
+      label: "Tasks",
+      icon: <TaskIcon />,
+      roles: ["User"],
+    },
+    {
+      path: "/notification",
+      label: "Notification",
+      icon: <NotificationsIcon />,
+      roles: ["User"],
+    },
+  ];
 
-function DemoPageContent({ pathname }) {
-  const userdata=localStorage.getItem("userdata");
+  // Filter menu items based on user role
+  const filteredMenuItems = menuItems.filter((item) =>
+    item.roles.includes(userdata.role)
+  );
+
+  const handleLogout = () => {
+    localStorage.removeItem("authtoken");
+    navigate("/");
+  };
+
+  const getUserInitials = (name) => {
+    return name
+      ? name
+          .split(" ")
+          .map((word) => word[0])
+          .join("")
+          .toUpperCase()
+      : "U";
+  };
+
+  const getRoleColor = (role) => {
+    switch (role) {
+      case "Admin":
+        return "error";
+      case "User":
+        return "primary";
+      default:
+        return "default";
+    }
+  };
+
   return (
-    <Box
+    <Drawer
+      variant="permanent"
       sx={{
-        py: 4,
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        textAlign: 'center',
+        width: SIDEBAR_WIDTH,
+        flexShrink: 0,
+        "& .MuiDrawer-paper": {
+          width: SIDEBAR_WIDTH,
+          boxSizing: "border-box",
+          backgroundColor:
+            theme.palette.mode === "dark" ? "#1e1e1e" : "#f5f5f5",
+          borderRight: `1px solid ${theme.palette.divider}`,
+        },
       }}
     >
-     {pathname=="/Task" && userdata.role=="User" ?<Task/>:
-     pathname=="/User"?<User/>:
-     (<><h1> </h1></>)}
-    </Box>
-  );
-}
 
-DemoPageContent.propTypes = {
-  pathname: PropTypes.string.isRequired,
-};
-
-function CustomThemeSwitcher() {
-  const { setMode } = useColorScheme();
-
-  const handleThemeChange = React.useCallback(
-    (event) => {
-      setMode(event.target.value);
-    },
-    [setMode],
-  );
-
-  const [isMenuOpen, setIsMenuOpen] = React.useState(false);
-  const [menuAnchorEl, setMenuAnchorEl] = React.useState(null);
-
-  const toggleMenu = React.useCallback(
-    (event) => {
-      setMenuAnchorEl(isMenuOpen ? null : event.currentTarget);
-      setIsMenuOpen((previousIsMenuOpen) => !previousIsMenuOpen);
-    },
-    [isMenuOpen],
-  );
-
-  return (
-    <React.Fragment>
-      <Tooltip title="Settings" enterDelay={1000}>
-        <div>
-          <IconButton type="button" aria-label="settings" onClick={toggleMenu}>
-            <SettingsIcon />
-          </IconButton>
-        </div>
-      </Tooltip>
-      <Popover
-        open={isMenuOpen}
-        anchorEl={menuAnchorEl}
-        onClose={toggleMenu}
-        anchorOrigin={{
-          vertical: 'bottom',
-          horizontal: 'left',
+      <Box
+        sx={{
+          p: 3,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          backgroundColor: theme.palette.primary.main,
+          color: theme.palette.primary.contrastText,
         }}
-        disableAutoFocus
       >
-        <Box sx={{ p: 2 }}>
-          <FormControl>
-            <FormLabel id="custom-theme-switcher-label">Theme</FormLabel>
-            <RadioGroup
-              aria-labelledby="custom-theme-switcher-label"
-              defaultValue="system"
-              name="custom-theme-switcher"
-              onChange={handleThemeChange}
-            >
-              <FormControlLabel value="light" control={<Radio />} label="Light" />
-              <FormControlLabel value="system" control={<Radio />} label="System" />
-              <FormControlLabel value="dark" control={<Radio />} label="Dark" />
-            </RadioGroup>
-          </FormControl>
-        </Box>
-      </Popover>
-    </React.Fragment>
-  );
-}
+        <Typography variant="h5" fontWeight="bold" sx={{ mb: 2 }}>
+          Dashboard
+        </Typography>
 
-function CustomToolbarActions() {
-  return (
-    <Stack direction="row" alignItems="center">
-      <CustomThemeSwitcher />
-      <Account />
-    </Stack>
-  );
-}
-
-function DashboardLayoutCustomThemeSwitcher(props) {
-  const { window } = props;
-
-  const router = useDemoRouter('/dashboard');
-
-  // Remove this const when copying and pasting into your project.
-  const demoWindow = window !== undefined ? window() : undefined;
-
-  return (
-    // Remove this provider when copying and pasting into your project.
-    <DemoProvider window={demoWindow}>
-      <AppProvider
-        navigation={NAVIGATION}
-        router={router}
-        theme={demoTheme}
-        window={demoWindow}
-      >
-       
-        <DashboardLayout
-          slots={{
-            toolbarActions: CustomToolbarActions,
+        <Paper
+          elevation={2}
+          sx={{
+            p: 2,
+            width: "100%",
+            backgroundColor: "rgba(255, 255, 255, 0.1)",
+            backdropFilter: "blur(10px)",
+            borderRadius: 2,
           }}
         >
-          <DemoPageContent pathname={router.pathname} />
-        </DashboardLayout>
-      
-      </AppProvider>
-    </DemoProvider>
-  );
-}
+          <Stack direction="row" spacing={2} alignItems="center">
+            <Avatar
+              sx={{
+                bgcolor: theme.palette.secondary.main,
+                color: theme.palette.secondary.contrastText,
+                fontSize: "1rem",
+              }}
+            >
+              {getUserInitials(userdata.name)}
+            </Avatar>
+            <Box>
+              <Typography
+                variant="body2"
+                sx={{ color: "inherit", fontWeight: "bold" }}
+              >
+                {userdata.name || "User"}
+              </Typography>
+              <Chip
+                label={userdata.role || "Guest"}
+                size="small"
+                color={getRoleColor(userdata.role)}
+                sx={{ mt: 0.5 }}
+              />
+            </Box>
+          </Stack>
+        </Paper>
+      </Box>
 
-DashboardLayoutCustomThemeSwitcher.propTypes = {
-  /**
-   * Injected by the documentation to work in an iframe.
-   * Remove this when copying and pasting into your project.
-   */
-  window: PropTypes.func,
+      <Divider />
+
+      <Box sx={{ flexGrow: 1, p: 1 }}>
+        <List>
+          {filteredMenuItems.map((item) => (
+            <ListItem key={item.path} disablePadding sx={{ mb: 0.5 }}>
+              <ListItemButton
+                component={Link}
+                to={item.path}
+                selected={location.pathname === item.path}
+                sx={{
+                  borderRadius: 2,
+                  mx: 1,
+                  "&.Mui-selected": {
+                    backgroundColor: theme.palette.primary.main,
+                    color: theme.palette.primary.contrastText,
+                    "&:hover": {
+                      backgroundColor: theme.palette.primary.dark,
+                    },
+                    "& .MuiListItemIcon-root": {
+                      color: theme.palette.primary.contrastText,
+                    },
+                  },
+                  "&:hover": {
+                    backgroundColor: theme.palette.action.hover,
+                  },
+                }}
+              >
+                <ListItemIcon
+                  sx={{
+                    color:
+                      location.pathname === item.path
+                        ? theme.palette.primary.contrastText
+                        : theme.palette.text.secondary,
+                  }}
+                >
+                  {item.icon}
+                </ListItemIcon>
+                <ListItemText
+                  primary={item.label}
+                  primaryTypographyProps={{
+                    fontWeight:
+                      location.pathname === item.path ? "bold" : "normal",
+                  }}
+                />
+              </ListItemButton>
+            </ListItem>
+          ))}
+        </List>
+      </Box>
+
+      <Divider />
+
+      <Box sx={{ p: 2 }}>
+        <Button
+          fullWidth
+          variant="outlined"
+          color="error"
+          startIcon={<LogoutIcon />}
+          onClick={handleLogout}
+          sx={{
+            borderRadius: 2,
+            py: 1.5,
+            textTransform: "none",
+            fontWeight: "bold",
+            "&:hover": {
+              backgroundColor: theme.palette.error.main,
+              color: theme.palette.error.contrastText,
+            },
+          }}
+        >
+          Logout
+        </Button>
+      </Box>
+    </Drawer>
+  );
 };
 
-export default DashboardLayoutCustomThemeSwitcher;
+export default Sidebar;

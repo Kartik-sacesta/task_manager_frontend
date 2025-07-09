@@ -3,11 +3,12 @@ import LoginPage from "../pages/Loginpage";
 
 const PublicRoutes = () => {
     return (
-        <BrowserRouter>
+        <>
             <Routes>
                 <Route path="/" element={<LoginPage />} />
+                
             </Routes>
-        </BrowserRouter>
+    </>
     );
 };
 

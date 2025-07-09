@@ -5,6 +5,13 @@ import Publicroutes from "./routes/Publicroutes";
 import Protectedroutes from "./routes/Protectedroutes";
 import { useEffect, useState } from "react";
 import axios from "axios";
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  Navigate,
+  Outlet,
+} from "react-router-dom";
 function App() {
   const [authorized, setauthorized] = useState(false);
   const token = localStorage.getItem("authtoken");
@@ -28,7 +35,7 @@ function App() {
   },[]);
 
   return (
-    <>
+    <><BrowserRouter>
       {authorized ? (
         <>
           <Protectedroutes />
@@ -39,6 +46,7 @@ function App() {
           <Publicroutes />{" "}
         </>
       )}
+      </BrowserRouter>
     </>
   );
 }

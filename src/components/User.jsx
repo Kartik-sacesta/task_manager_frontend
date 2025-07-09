@@ -22,7 +22,6 @@ import DialogTitle from "@mui/material/DialogTitle";
 import DialogContent from "@mui/material/DialogContent";
 import DialogActions from "@mui/material/DialogActions";
 import TextField from "@mui/material/TextField";
-import MenuItem from "@mui/material/MenuItem";
 import Grid from "@mui/material/Grid";
 import CircularProgress from "@mui/material/CircularProgress";
 import Snackbar from "@mui/material/Snackbar";
@@ -32,6 +31,9 @@ import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
 import { visuallyHidden } from "@mui/utils";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
+
+const API_BASE_URL = "http://localhost:5000";
 
 const headCells = [
   {
@@ -44,7 +46,13 @@ const headCells = [
     id: "email",
     numeric: false,
     disablePadding: false,
-    label: "E-mail",
+    label: "Email",
+  },
+  {
+    id: "actions",
+    numeric: false,
+    disablePadding: false,
+    label: "Actions",
   },
 ];
 
@@ -66,13 +74,12 @@ function getComparator(order, orderBy) {
 
 function EnhancedTableHead(props) {
   const {
-    onSelectAllClick,
     order,
     orderBy,
-    numSelected,
-    rowCount,
+
     onRequestSort,
   } = props;
+
   const createSortHandler = (property) => (event) => {
     onRequestSort(event, property);
   };
@@ -80,17 +87,7 @@ function EnhancedTableHead(props) {
   return (
     <TableHead>
       <TableRow>
-        <TableCell padding="checkbox">
-          <Checkbox
-            color="primary"
-            indeterminate={numSelected > 0 && numSelected < rowCount}
-            checked={rowCount > 0 && numSelected === rowCount}
-            onChange={onSelectAllClick}
-            inputProps={{
-              "aria-label": "select all tasks",
-            }}
-          />
-        </TableCell>
+        <TableCell padding="checkbox"></TableCell>
         {headCells.map((headCell) => (
           <TableCell
             key={headCell.id}
@@ -133,7 +130,7 @@ EnhancedTableHead.propTypes = {
 };
 
 function EnhancedTableToolbar(props) {
-  const { numSelected, onCreateTask, onDeleteSelected } = props;
+  const { numSelected, onCreateUser } = props;
 
   return (
     <Toolbar
@@ -141,6 +138,8 @@ function EnhancedTableToolbar(props) {
         {
           pl: { sm: 2 },
           pr: { xs: 1, sm: 1 },
+          width: "100%",
+          display: "flex",
         },
         numSelected > 0 && {
           bgcolor: (theme) =>
@@ -151,62 +150,48 @@ function EnhancedTableToolbar(props) {
         },
       ]}
     >
-      {numSelected > 0 ? (
-        <Typography
-          sx={{ flex: "1 1 100%" }}
-          color="inherit"
-          variant="subtitle1"
-          component="div"
-        >
-          {numSelected} selected
-        </Typography>
-      ) : (
+      <Typography
+        sx={{ flex: "1 1 100%" }}
+        variant="h6"
+        id="tableTitle"
+        component="div"
+      >
+        Users
+      </Typography>
+      <Tooltip title="Create User">
         <Typography
           sx={{ flex: "1 1 100%" }}
           variant="h6"
           id="tableTitle"
           component="div"
         >
-          User
-        </Typography>
-      )}
-      {numSelected > 0 ? (
-        <Tooltip title="Delete">
-          <IconButton onClick={onDeleteSelected}>
-            <DeleteIcon />
-          </IconButton>
-        </Tooltip>
-      ) : (
-        <Tooltip title="Create User">
           <Button
             variant="contained"
+            style={{ marginLeft: "70%" }}
             startIcon={<AddIcon />}
-            onClick={onCreateTask}
-            sx={{ textTransform: "none" }}
+            onClick={onCreateUser}
+            sx={{ textTransform: "none", ml: 2 }}
           >
             Create User
           </Button>
-        </Tooltip>
-      )}
+        </Typography>
+      </Tooltip>
     </Toolbar>
   );
 }
 
 EnhancedTableToolbar.propTypes = {
   numSelected: PropTypes.number.isRequired,
-  onCreateTask: PropTypes.func.isRequired,
+  onCreateUser: PropTypes.func.isRequired,
   onDeleteSelected: PropTypes.func.isRequired,
 };
 
-function CreateTaskModal({
-  open,
-  onClose,
-  onSubmit,
-  loading,
-  edit,
-  initialData,
-}) {
-  const [formData, setFormData] = React.useState({});
+function UserModal({ open, onClose, onSubmit, loading, edit, initialData }) {
+  const [formData, setFormData] = React.useState({
+    name: "",
+    email: "",
+    password: "",
+  });
   const [errors, setErrors] = React.useState({});
 
   React.useEffect(() => {
@@ -214,10 +199,7 @@ function CreateTaskModal({
       setFormData({
         name: initialData.name || "",
         email: initialData.email || "",
-        password: initialData.password || ""
-      
-           
-        
+        password: initialData.password || "",
       });
     } else {
       setFormData({
@@ -242,31 +224,30 @@ function CreateTaskModal({
     }
   };
 
-
-
-  const handleSubmit = () => {
-    // Prepare the data to submit
-    const submitData = {
-      name: formData.name,
-      email: formData.email,
-      password: formData.password,
-    };
-
-    // Basic validation
+  const validateForm = () => {
     const newErrors = {};
     if (!formData.name.trim()) {
       newErrors.name = "Name is required";
     }
     if (!formData.email.trim()) {
       newErrors.email = "Email is required";
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      newErrors.email = "Please enter a valid email address";
     }
     if (!formData.password.trim()) {
       newErrors.password = "Password is required";
+    } else if (formData.password.length < 6) {
+      newErrors.password = "Password must be at least 6 characters";
     }
-    setErrors(newErrors);
+    return newErrors;
+  };
 
-    if (Object.keys(newErrors).length === 0) {
-      onSubmit(submitData);
+  const handleSubmit = () => {
+    const validationErrors = validateForm();
+    setErrors(validationErrors);
+
+    if (Object.keys(validationErrors).length === 0) {
+      onSubmit(formData);
     }
   };
 
@@ -288,37 +269,36 @@ function CreateTaskModal({
           <Grid item xs={12}>
             <TextField
               fullWidth
-              label="name"
-              value={formData.title}
+              label="Name"
+              value={formData.name}
               onChange={handleChange("name")}
-              error={!!errors.title}
-              helperText={errors.title}
+              error={!!errors.name}
+              helperText={errors.name}
               disabled={loading}
+              autoFocus
             />
           </Grid>
-
           <Grid item xs={12}>
             <TextField
               fullWidth
-              label="email"
-              rows={3}
-              value={formData.description}
+              label="Email"
+              type="email"
+              value={formData.email}
               onChange={handleChange("email")}
-              error={!!errors.description}
-              helperText={errors.description}
+              error={!!errors.email}
+              helperText={errors.email}
               disabled={loading}
             />
           </Grid>
-
-          <Grid item xs={12} sm={6}>
+          <Grid item xs={12}>
             <TextField
               fullWidth
-              label="password"
-              rows={3}
-              value={formData.description}
+              label="Password"
+              type="password"
+              value={formData.password}
               onChange={handleChange("password")}
-              error={!!errors.description}
-              helperText={errors.description}
+              error={!!errors.password}
+              helperText={errors.password}
               disabled={loading}
             />
           </Grid>
@@ -347,7 +327,7 @@ function CreateTaskModal({
   );
 }
 
-CreateTaskModal.propTypes = {
+UserModal.propTypes = {
   open: PropTypes.bool.isRequired,
   onClose: PropTypes.func.isRequired,
   onSubmit: PropTypes.func.isRequired,
@@ -356,9 +336,9 @@ CreateTaskModal.propTypes = {
   initialData: PropTypes.object,
 };
 
-export default function EnhancedTable() {
+export default function EnhancedUserTable() {
   const [order, setOrder] = React.useState("asc");
-  const [orderBy, setOrderBy] = React.useState("title");
+  const [orderBy, setOrderBy] = React.useState("name");
   const [selected, setSelected] = React.useState([]);
   const [page, setPage] = React.useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(5);
@@ -366,45 +346,16 @@ export default function EnhancedTable() {
   const [loading, setLoading] = React.useState(false);
   const [modalOpen, setModalOpen] = React.useState(false);
   const [edit, setEdit] = React.useState(false);
-  const [editTaskId, setEditTaskId] = React.useState(null);
-  const [editTaskData, setEditTaskData] = React.useState(null);
+  const [editUserId, setEditUserId] = React.useState(null);
+  const [editUserData, setEditUserData] = React.useState(null);
   const [createLoading, setCreateLoading] = React.useState(false);
-  const [deleteLoading, setDeleteLoading] = React.useState(false);
   const [snackbar, setSnackbar] = React.useState({
     open: false,
     message: "",
     severity: "success",
   });
 
-  // Fetch tasks from API
-  const fetchTasks = React.useCallback(async () => {
-    setLoading(true);
-    try {
-      const token = localStorage.getItem("authtoken");
-      const response = await fetch("http://localhost:5000/user", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setRows(Array.isArray(data) ? data : []);
-      } else {
-        throw new Error("Failed to fetch tasks");
-      }
-    } catch (error) {
-      console.error("Error fetching tasks:", error);
-      showSnackbar("Failed to fetch tasks", "error");
-      setRows([]);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  React.useEffect(() => {
-    fetchTasks();
-  }, [fetchTasks]);
+  const getAuthToken = () => localStorage.getItem("authtoken");
 
   const showSnackbar = (message, severity = "success") => {
     setSnackbar({
@@ -417,36 +368,60 @@ export default function EnhancedTable() {
   const handleCloseSnackbar = () => {
     setSnackbar((prev) => ({ ...prev, open: false }));
   };
-  const handleCreateTask = async (taskData) => {
-    setCreateLoading(true);
+
+  const fetchUsers = React.useCallback(async () => {
+    setLoading(true);
     try {
-      const token = localStorage.getItem("authtoken");
+      const token = getAuthToken();
+      const response = await fetch(`${API_BASE_URL}/user`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
-      const response = await axios.post(
-        "http://localhost:5000/user",
-        taskData,
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      console.log(response);
-      if (response.status === 200 || response.status === 201) {
-        showSnackbar("user created successfully!");
-        setModalOpen(false);
-        fetchTasks();
+      if (response.ok) {
+        const data = await response.json();
+        setRows(Array.isArray(data) ? data : []);
       } else {
-        throw new Error(response.data?.message || "Failed to create task");
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
     } catch (error) {
-      console.error("Error creating task:", error);
+      console.error("Error fetching users:", error);
+      showSnackbar("Failed to fetch users", "error");
+      setRows([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  React.useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers]);
+
+  const handleCreateUser = async (userData) => {
+    setCreateLoading(true);
+    try {
+      const token = getAuthToken();
+      const response = await axios.post(`${API_BASE_URL}/user`, userData, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.status === 200 || response.status === 201) {
+        showSnackbar("User created successfully!");
+        setModalOpen(false);
+        fetchUsers();
+      } else {
+        throw new Error(response.data?.message || "Failed to create user");
+      }
+    } catch (error) {
+      console.error("Error creating user:", error);
       showSnackbar(
         error.response?.data?.message ||
           error.message ||
-          "Failed to create task",
+          "Failed to create user",
         "error"
       );
     } finally {
@@ -454,14 +429,14 @@ export default function EnhancedTable() {
     }
   };
 
-  const handleEditTask = async (taskData) => {
-    if (!editTaskId) return;
+  const handleEditUser = async (userData) => {
+    if (!editUserId) return;
     setCreateLoading(true);
     try {
-      const token = localStorage.getItem("authtoken");
+      const token = getAuthToken();
       const response = await axios.put(
-        `http://localhost:5000/user/${editTaskId}`,
-        taskData,
+        `${API_BASE_URL}/user/${editUserId}`,
+        userData,
         {
           headers: {
             "Content-Type": "application/json",
@@ -469,23 +444,23 @@ export default function EnhancedTable() {
           },
         }
       );
-      console.log(response);
+
       if (response.status === 200) {
-        showSnackbar("Task updated successfully!");
+        showSnackbar("User updated successfully!");
         setModalOpen(false);
         setEdit(false);
-        setEditTaskId(null);
-        setEditTaskData(null);
-        fetchTasks();
+        setEditUserId(null);
+        setEditUserData(null);
+        fetchUsers();
       } else {
-        throw new Error(response.data?.message || "Failed to update task");
+        throw new Error(response.data?.message || "Failed to update user");
       }
     } catch (error) {
-      console.error("Error updating task:", error);
+      console.error("Error updating user:", error);
       showSnackbar(
         error.response?.data?.message ||
           error.message ||
-          "Failed to update task",
+          "Failed to update user",
         "error"
       );
     } finally {
@@ -493,19 +468,16 @@ export default function EnhancedTable() {
     }
   };
 
-  const handleDeleteSelected = async () => {
+  const handleDeleteUser = async (id) => {
     if (selected.length === 0) return;
 
-    setDeleteLoading(true);
     try {
-      const token = localStorage.getItem("authtoken");
-      const deletePromises = selected.map((id) =>
-        axios.delete(`http://localhost:5000/user/${id}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        })
-      );
+      const token = getAuthToken();
+      const deletePromises = axios.delete(`${API_BASE_URL}/user/${id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
       const responses = await Promise.allSettled(deletePromises);
       const failedDeletes = responses.filter(
@@ -513,22 +485,20 @@ export default function EnhancedTable() {
       );
 
       if (failedDeletes.length === 0) {
-        showSnackbar(`${selected.length} task(s) deleted successfully!`);
+        showSnackbar(`${selected.length} user(s) deleted successfully!`);
         setSelected([]);
-        fetchTasks();
+        fetchUsers();
       } else {
-        throw new Error(`Failed to delete ${failedDeletes.length} task(s)`);
+        throw new Error(`Failed to delete ${failedDeletes.length} user(s)`);
       }
     } catch (error) {
-      console.error("Error deleting tasks:", error);
+      console.error("Error deleting users:", error);
       showSnackbar(
         error.response?.data?.message ||
           error.message ||
-          "Failed to delete tasks",
+          "Failed to delete users",
         "error"
       );
-    } finally {
-      setDeleteLoading(false);
     }
   };
 
@@ -547,25 +517,6 @@ export default function EnhancedTable() {
     setSelected([]);
   };
 
-  const handleClick = (event, id) => {
-    const selectedIndex = selected.indexOf(id);
-    let newSelected = [];
-
-    if (selectedIndex === -1) {
-      newSelected = newSelected.concat(selected, id);
-    } else if (selectedIndex === 0) {
-      newSelected = newSelected.concat(selected.slice(1));
-    } else if (selectedIndex === selected.length - 1) {
-      newSelected = newSelected.concat(selected.slice(0, -1));
-    } else if (selectedIndex > 0) {
-      newSelected = newSelected.concat(
-        selected.slice(0, selectedIndex),
-        selected.slice(selectedIndex + 1)
-      );
-    }
-    setSelected(newSelected);
-  };
-
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
   };
@@ -575,17 +526,18 @@ export default function EnhancedTable() {
     setPage(0);
   };
 
-  const formatDate = (dateString) => {
-    if (!dateString) return "";
-    try {
-      return new Date(dateString).toLocaleDateString("en-GB", {
-        day: "2-digit",
-        month: "long",
-        year: "numeric",
-      });
-    } catch {
-      return dateString;
-    }
+  const handleOpenEditModal = (row) => {
+    setEditUserId(row.id);
+    setEditUserData(row);
+    setEdit(true);
+    setModalOpen(true);
+  };
+
+  const handleModalClose = () => {
+    setModalOpen(false);
+    setEdit(false);
+    setEditUserId(null);
+    setEditUserData(null);
   };
 
   const emptyRows =
@@ -598,33 +550,21 @@ export default function EnhancedTable() {
         .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage),
     [rows, order, orderBy, page, rowsPerPage]
   );
-
-  const handleOpenEditModal = (row) => {
-    setEditTaskId(row.id);
-    setEditTaskData(row);
-    setEdit(true);
-    setModalOpen(true);
+  const navigation = useNavigate();
+  const handleUserClick = (id) => {
+    navigation(`/user/${id}`);
   };
-
-  const handleModalClose = () => {
-    setModalOpen(false);
-    setEdit(false);
-    setEditTaskId(null);
-    setEditTaskData(null);
-  };
-
   return (
     <Box sx={{ width: "100%" }}>
       <Paper sx={{ width: "100%", mb: 2 }}>
         <EnhancedTableToolbar
           numSelected={selected.length}
-          onCreateTask={() => {
+          onCreateUser={() => {
             setEdit(false);
-            setEditTaskId(null);
-            setEditTaskData(null);
+            setEditUserId(null);
+            setEditUserData(null);
             setModalOpen(true);
           }}
-          onDeleteSelected={handleDeleteSelected}
         />
         <TableContainer>
           <Table
@@ -643,14 +583,14 @@ export default function EnhancedTable() {
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={6} align="center">
+                  <TableCell colSpan={4} align="center">
                     <CircularProgress />
                   </TableCell>
                 </TableRow>
               ) : visibleRows.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} align="center">
-                    No tasks found.
+                  <TableCell colSpan={4} align="center">
+                    No users found.
                   </TableCell>
                 </TableRow>
               ) : (
@@ -661,32 +601,24 @@ export default function EnhancedTable() {
                   return (
                     <TableRow
                       hover
-                      role="checkbox"
+                      onClick={() => handleUserClick(row.id)}
                       aria-checked={isItemSelected}
                       tabIndex={-1}
                       key={row.id}
                       selected={isItemSelected}
                       sx={{ cursor: "pointer" }}
                     >
-                      <TableCell padding="checkbox">
-                        <Checkbox
-                          color="primary"
-                          checked={isItemSelected}
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            handleClick(event, row.id);
-                          }}
-                          inputProps={{
-                            "aria-labelledby": labelId,
-                          }}
-                        />
-                      </TableCell>
+                      <TableCell></TableCell>
                       <TableCell
                         component="th"
                         id={labelId}
                         scope="row"
                         padding="none"
-                        onClick={() => handleClick(null, row.id)}
+                        onClick={() => handleUserClick(row.id)}
+                        sx={{
+                          cursor: "pointer",
+                          "&:hover": { backgroundColor: "rgba(0, 0, 0, 0.04)" },
+                        }}
                       >
                         <Typography variant="subtitle2" noWrap>
                           {row.name}
@@ -698,21 +630,31 @@ export default function EnhancedTable() {
                         </Typography>
                       </TableCell>
                       <TableCell align="left">
-                        {formatDate(row.expiredDate || row.expried_date)}
-                      </TableCell>
-
-                      <TableCell align="left">
-                        <Tooltip title="Edit">
-                          <IconButton
-                            size="small"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleOpenEditModal(row);
-                            }}
-                          >
-                            <EditIcon fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
+                        <Box sx={{ display: "flex", gap: 1 }}>
+                          <Tooltip title="Edit">
+                            <IconButton
+                              size="small"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleOpenEditModal(row);
+                              }}
+                            >
+                              <EditIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip title="Delete">
+                            <IconButton
+                              size="small"
+                              color="error"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteUser(row.id);
+                              }}
+                            >
+                              <DeleteIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                        </Box>
                       </TableCell>
                     </TableRow>
                   );
@@ -724,7 +666,7 @@ export default function EnhancedTable() {
                     height: 53 * emptyRows,
                   }}
                 >
-                  <TableCell colSpan={6} />
+                  <TableCell colSpan={4} />
                 </TableRow>
               )}
             </TableBody>
@@ -741,13 +683,13 @@ export default function EnhancedTable() {
         />
       </Paper>
 
-      <CreateTaskModal
+      <UserModal
         open={modalOpen}
         onClose={handleModalClose}
-        onSubmit={edit ? handleEditTask : handleCreateTask}
+        onSubmit={edit ? handleEditUser : handleCreateUser}
         loading={createLoading}
         edit={edit}
-        initialData={editTaskData}
+        initialData={editUserData}
       />
 
       <Snackbar
