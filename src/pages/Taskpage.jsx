@@ -30,7 +30,7 @@ import Alert from "@mui/material/Alert";
 import DeleteIcon from "@mui/icons-material/Delete";
 import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
-import CommentIcon from "@mui/icons-material/Comment"; // Import Comment icon
+import CommentIcon from "@mui/icons-material/Comment";
 import { visuallyHidden } from "@mui/utils";
 import axios from "axios";
 import FormControl from "@mui/material/FormControl";
@@ -40,6 +40,9 @@ import List from "@mui/material/List";
 import ListItem from "@mui/material/ListItem";
 import ListItemText from "@mui/material/ListItemText";
 import Divider from "@mui/material/Divider";
+import TaskCommentsModal from "../modals/TaskCommentsModal";
+import CreateTaskModal from "../modals/CreateTaskModal";
+import ConfirmationDialog from "../modals/ConfirmationDialog";
 
 const headCells = [
   {
@@ -78,13 +81,6 @@ const headCells = [
     disablePadding: false,
     label: "Actions",
   },
-];
-
-const statusOptions = [
-  { value: "pending", label: "Pending" },
-  { value: "in-progress", label: "In Progress" },
-  { value: "completed", label: "Completed" },
- 
 ];
 
 const priorityOptions = [
@@ -180,7 +176,14 @@ EnhancedTableHead.propTypes = {
 };
 
 function EnhancedTableToolbar(props) {
-  const { numSelected, onCreateTask, onDeleteSelected, deleteLoading, priorityFilter, onPriorityFilterChange } = props;
+  const {
+    numSelected,
+    onCreateTask,
+    onDeleteSelected,
+    deleteLoading,
+    priorityFilter,
+    onPriorityFilterChange,
+  } = props;
 
   return (
     <Toolbar
@@ -236,17 +239,14 @@ function EnhancedTableToolbar(props) {
       {numSelected > 0 ? (
         <Tooltip title="Delete">
           <IconButton onClick={onDeleteSelected} disabled={deleteLoading}>
-            {deleteLoading ? (
-              <CircularProgress size={24} />
-            ) : (
-              <DeleteIcon />
-            )}
+            {deleteLoading ? <CircularProgress size={24} /> : <DeleteIcon />}
           </IconButton>
         </Tooltip>
       ) : (
         <Tooltip title="Create Task">
           <Button
             variant="contained"
+            size="small"
             startIcon={<AddIcon />}
             onClick={onCreateTask}
             sx={{ textTransform: "none" }}
@@ -268,508 +268,254 @@ EnhancedTableToolbar.propTypes = {
   onPriorityFilterChange: PropTypes.func.isRequired,
 };
 
-function CreateTaskModal({
-  open,
-  onClose,
-  onSubmit,
-  loading,
-  edit,
-  initialData,
-}) {
-  const [formData, setFormData] = React.useState({
-    title: "",
-    description: "",
-    expiredDate: "",
-    status: "pending",
-    priority: "Medium",
-  });
-  const [errors, setErrors] = React.useState({});
+//   const [comments, setComments] = React.useState([]);
+//   const [newCommentText, setNewCommentText] = React.useState("");
+//   const [loadingComments, setLoadingComments] = React.useState(false);
+//   const [submittingComment, setSubmittingComment] = React.useState(false);
+//   const [deletingCommentId, setDeletingCommentId] = React.useState(null);
 
-  React.useEffect(() => {
-    if (edit && initialData) {
-      setFormData({
-        title: initialData.title || "",
-        description: initialData.description || "",
-        expiredDate: initialData.expiredDate
-          ? initialData.expiredDate.split("T")[0]
-          : initialData.expried_date
-          ? initialData.expried_date.split("T")[0]
-          : "",
-        status: initialData.status || "pending",
-        priority: initialData.priority || "Medium",
-      });
-    } else {
-      setFormData({
-        title: "",
-        description: "",
-        expiredDate: "",
-        status: "pending",
-        priority: "Medium",
-      });
-    }
-    setErrors({});
-  }, [open, edit, initialData]);
+//   const fetchComments = React.useCallback(async () => {
+//     if (!taskId) return;
+//     setLoadingComments(true);
+//     try {
+//       const token = localStorage.getItem("authtoken");
+//       const response = await axios.get(
+//         `http://localhost:5000/taskcomments/${taskId}`,
+//         {
+//           headers: {
+//             Authorization: `Bearer ${token}`,
+//           },
+//         }
+//       );
+//       console.log(response);
+//       if (response.status === 200) {
+//         setComments(Array.isArray(response.data) ? response.data : []);
+//       } else {
+//         throw new Error("Failed to fetch comments");
+//       }
+//     } catch (error) {
+//       console.error("Error fetching comments:", error);
+//       showSnackbar("Failed to fetch comments", "error");
+//       setComments([]);
+//     } finally {
+//       setLoadingComments(false);
+//     }
+//   }, [taskId, showSnackbar]);
 
-  const handleChange = (field) => (event) => {
-    setFormData((prev) => ({
-      ...prev,
-      [field]: event.target.value,
-    }));
-    if (errors[field]) {
-      setErrors((prev) => ({
-        ...prev,
-        [field]: "",
-      }));
-    }
-  };
+//   React.useEffect(() => {
+//     if (open) {
+//       fetchComments();
+//     } else {
 
-  const validateForm = () => {
-    const newErrors = {};
+//       setComments([]);
+//       setNewCommentText("");
+//     }
+//   }, [open, fetchComments]);
 
-    if (!formData.title.trim()) {
-      newErrors.title = "Title is required";
-    }
+//   const handleSubmitComment = async () => {
+//     if (!newCommentText.trim()) {
+//       showSnackbar("Comment cannot be empty", "warning");
+//       return;
+//     }
+//     setSubmittingComment(true);
+//     console.log(newCommentText);
+//     try {
+//       const token = localStorage.getItem("authtoken");
+//       const response = await axios.post(
+//         `http://localhost:5000/taskcomments/${taskId}`,
+//         { comments: newCommentText },
+//         {
+//           headers: {
+//             "Content-Type": "application/json",
+//             Authorization: `Bearer ${token}`,
+//           },
+//         }
+//       );
+//       console.log(response);
+//       if (response.status === 200 || response.status === 201) {
+//         showSnackbar("Comment added successfully!");
+//         setNewCommentText("");
+//         fetchComments();
+//       } else {
+//         throw new Error(response.data?.message || "Failed to add comment");
+//       }
+//     } catch (error) {
+//       console.error("Error adding comment:", error);
+//       showSnackbar(
+//         error.response?.data?.message ||
+//           error.message ||
+//           "Failed to add comment",
+//         "error"
+//       );
+//     } finally {
+//       setSubmittingComment(false);
+//     }
+//   };
 
-    if (!formData.description.trim()) {
-      newErrors.description = "Description is required";
-    }
+//   const handleDeleteComment = async (commentId) => {
+//     if (!commentId) return;
 
-    if (!formData.expiredDate) {
-      newErrors.expiredDate = "Expired date is required";
-    } else {
-      const selectedDate = new Date(formData.expiredDate);
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
+//     setDeletingCommentId(commentId);
+//     try {
+//       const token = localStorage.getItem("authtoken");
+//       const response = await axios.delete(
+//         `http://localhost:5000/taskcomments/${commentId}`,
+//         {
+//           headers: {
+//             Authorization: `Bearer ${token}`,
+//           },
+//         }
+//       );
 
-      if (selectedDate < today) {
-        newErrors.expiredDate = "Expired date cannot be in the past";
-      }
-    }
+//       if (response.status === 200 || response.status === 204) {
+//         showSnackbar("Comment deleted successfully!");
+//         fetchComments(); // Refresh comments list
+//       } else {
+//         throw new Error(response.data?.message || "Failed to delete comment");
+//       }
+//     } catch (error) {
+//       console.error("Error deleting comment:", error);
+//       showSnackbar(
+//         error.response?.data?.message ||
+//           error.message ||
+//           "Failed to delete comment",
+//         "error"
+//       );
+//     } finally {
+//       setDeletingCommentId(null);
+//     }
+//   };
 
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
+//   const formatDate = (dateString) => {
+//     if (!dateString) return "";
+//     try {
+//       return new Date(dateString).toLocaleString("en-GB", {
+//         day: "2-digit",
+//         month: "long",
+//         year: "numeric",
+//         hour: "2-digit",
+//         minute: "2-digit",
+//       });
+//     } catch {
+//       return dateString;
+//     }
+//   };
 
-  const handleSubmit = () => {
-    if (validateForm()) {
-      const submitData = {
-        ...formData,
-        expried_date: new Date(formData.expiredDate).toISOString(),
-      };
-      delete submitData.expiredDate;
-      onSubmit(submitData);
-    }
-  };
+//   return (
+//     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
+//       <DialogTitle>Comments for Task </DialogTitle>
+//       <DialogContent dividers>
+//         {loadingComments ? (
+//           <Box sx={{ display: "flex", justifyContent: "center", py: 2 }}>
+//             <CircularProgress />
+//           </Box>
+//         ) : comments.length === 0 ? (
+//           <Typography variant="body2" color="textSecondary" sx={{ py: 2 }}>
+//             No comments yet. Be the first to add one!
+//           </Typography>
+//         ) : (
+//           <List>
+//             {comments.map((comment, index) => (
+//               <React.Fragment key={comment.id || index}>
+//                 <ListItem
+//                   alignItems="flex-start"
+//                   sx={{
+//                     display: "flex",
+//                     justifyContent: "space-between",
+//                     alignItems: "flex-start",
+//                   }}
+//                 >
+//                   <ListItemText
+//                     // primary={
+//                     //   <Typography
+//                     //     sx={{ display: "inline" }}
+//                     //     component="span"
+//                     //     variant="body2"
+//                     //     color="text.primary"
+//                     //   >
+//                     //     {comment.user  ? comment.user.username : "Anonymous"}
+//                     //   </Typography>
+//                     // }
+//                     secondary={
+//                       <React.Fragment>
+//                         <Typography
+//                           sx={{ display: "block" }}
+//                           component="span"
+//                           variant="body2"
+//                           color="text.secondary"
+//                         >
+//                           {comment.comments}
+//                         </Typography>
+//                         <Typography
+//                           sx={{ display: "block" }}
+//                           component="span"
+//                           variant="caption"
+//                           color="text.disabled"
+//                         >
+//                           {formatDate(comment.createdAt)}
+//                         </Typography>
+//                       </React.Fragment>
+//                     }
+//                   />
+//                   <IconButton
+//                     edge="end"
+//                     aria-label="delete comment"
+//                     onClick={() => handleDeleteComment(comment.id)}
+//                     disabled={deletingCommentId === comment.id}
+//                     sx={{
+//                       ml: 1,
+//                       color: "error.main",
+//                       "&:hover": {
+//                         backgroundColor: "error.light",
+//                         color: "error.contrastText",
+//                       },
+//                     }}
+//                   >
+//                     {deletingCommentId === comment.id ? (
+//                       <CircularProgress size={20} />
+//                     ) : (
+//                       <DeleteIcon />
+//                     )}
+//                   </IconButton>
+//                 </ListItem>
+//                 {index < comments.length - 1 && <Divider component="li" />}
+//               </React.Fragment>
+//             ))}
+//           </List>
+//         )}
+//         <Box sx={{ mt: 3, display: "flex", alignItems: "center", gap: 2 }}>
+//           <TextField
+//             fullWidth
+//             label="Add a new comment"
+//             multiline
+//             rows={2}
+//             value={newCommentText}
+//             onChange={(e) => setNewCommentText(e.target.value)}
+//             disabled={submittingComment}
+//           />
+//           <Button
+//             variant="contained"
+//             onClick={handleSubmitComment}
+//             disabled={submittingComment}
+//             sx={{ flexShrink: 0, height: "fit-content" }}
+//           >
+//             {submittingComment ? <CircularProgress size={24} /> : "Post"}
+//           </Button>
+//         </Box>
+//       </DialogContent>
+//       <DialogActions>
+//         <Button onClick={onClose}>Close</Button>
+//       </DialogActions>
+//     </Dialog>
+//   );
+// }
 
-  const handleClose = () => {
-    setFormData({
-      title: "",
-      description: "",
-      expiredDate: "",
-      status: "pending",
-      priority: "Medium",
-    });
-    setErrors({});
-    onClose();
-  };
-
-  const today = new Date().toISOString().split("T")[0];
-
-  return (
-    <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
-      <DialogTitle>{edit ? "Edit Task" : "Create New Task"}</DialogTitle>
-      <DialogContent>
-        <Grid container spacing={2} sx={{ mt: 1 }}>
-          <Grid item xs={12}>
-            <TextField
-              fullWidth
-              label="Title"
-              value={formData.title}
-              onChange={handleChange("title")}
-              error={!!errors.title}
-              helperText={errors.title}
-              disabled={loading}
-            />
-          </Grid>
-
-          <Grid item xs={12}>
-            <TextField
-              fullWidth
-              label="Description"
-              multiline
-              rows={3}
-              value={formData.description}
-              onChange={handleChange("description")}
-              error={!!errors.description}
-              helperText={errors.description}
-              disabled={loading}
-            />
-          </Grid>
-
-          <Grid item xs={12} sm={6}>
-            <TextField
-              fullWidth
-              label="Expired Date"
-              type="date"
-              value={formData.expiredDate}
-              onChange={handleChange("expiredDate")}
-              InputLabelProps={{
-                shrink: true,
-              }}
-              inputProps={{
-                min: today,
-              }}
-              error={!!errors.expiredDate}
-              helperText={errors.expiredDate}
-              disabled={loading}
-            />
-          </Grid>
-
-          <Grid item xs={12} sm={6}>
-            <TextField
-              fullWidth
-              label="Status"
-              select
-              value={formData.status}
-              onChange={handleChange("status")}
-              disabled={loading}
-            >
-              {statusOptions.map((option) => (
-                <MenuItem key={option.value} value={option.value}>
-                  {option.label}
-                </MenuItem>
-              ))}
-            </TextField>
-          </Grid>
-
-          <Grid item xs={12} sm={6}>
-            <TextField
-              fullWidth
-              label="Priority"
-              select
-              value={formData.priority}
-              onChange={handleChange("priority")}
-              disabled={loading}
-            >
-              {priorityOptions.slice(1).map((option) => (
-                // Exclude "All" from Create/Edit modal
-                <MenuItem key={option.value} value={option.value}>
-                  {option.label}
-                </MenuItem>
-              ))}
-            </TextField>
-          </Grid>
-        </Grid>
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={handleClose} disabled={loading}>
-          Cancel
-        </Button>
-        <Button
-          onClick={handleSubmit}
-          variant="contained"
-          disabled={loading}
-          startIcon={loading ? <CircularProgress size={16} /> : null}
-        >
-          {loading
-            ? edit
-              ? "Saving..."
-              : "Creating..."
-            : edit
-            ? "Save Changes"
-            : "Create Task"}
-        </Button>
-      </DialogActions>
-    </Dialog>
-  );
-}
-
-CreateTaskModal.propTypes = {
-  open: PropTypes.bool.isRequired,
-  onClose: PropTypes.func.isRequired,
-  onSubmit: PropTypes.func.isRequired,
-  loading: PropTypes.bool.isRequired,
-  edit: PropTypes.bool.isRequired,
-  initialData: PropTypes.object,
-};
-
-function ConfirmationDialog({ open, title, message, onConfirm, onCancel, loading }) {
-  return (
-    <Dialog open={open} onClose={onCancel} maxWidth="xs" fullWidth>
-      <DialogTitle>{title}</DialogTitle>
-      <DialogContent>
-        <Typography>{message}</Typography>
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={onCancel} disabled={loading}>
-          Cancel
-        </Button>
-        <Button onClick={onConfirm} color="error" variant="contained" disabled={loading}>
-          {loading ? <CircularProgress size={16} /> : "Confirm"}
-        </Button>
-      </DialogActions>
-    </Dialog>
-  );
-}
-
-ConfirmationDialog.propTypes = {
-  open: PropTypes.bool.isRequired,
-  title: PropTypes.string.isRequired,
-  message: PropTypes.string.isRequired,
-  onConfirm: PropTypes.func.isRequired,
-  onCancel: PropTypes.func.isRequired,
-  loading: PropTypes.bool.isRequired,
-};
-
-function TaskCommentsModal({ open, onClose, taskId, showSnackbar }) {
-  const [comments, setComments] = React.useState([]);
-  const [newCommentText, setNewCommentText] = React.useState("");
-  const [loadingComments, setLoadingComments] = React.useState(false);
-  const [submittingComment, setSubmittingComment] = React.useState(false);
-  const [deletingCommentId, setDeletingCommentId] = React.useState(null);
-
-  const fetchComments = React.useCallback(async () => {
-    if (!taskId) return;
-    setLoadingComments(true);
-    try {
-      const token = localStorage.getItem("authtoken");
-      const response = await axios.get(
-        `http://localhost:5000/taskcomments/${taskId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      console.log(response);  
-      if (response.status === 200) {
-        setComments(Array.isArray(response.data) ? response.data : []);
-      } else {
-        throw new Error("Failed to fetch comments");
-      }
-    } catch (error) {
-      console.error("Error fetching comments:", error);
-      showSnackbar("Failed to fetch comments", "error");
-      setComments([]);
-    } finally {
-      setLoadingComments(false);
-    }
-  }, [taskId, showSnackbar]);
-
-  React.useEffect(() => {
-    if (open) {
-      fetchComments();
-    } else {
-      // Clear comments when modal closes
-      setComments([]);
-      setNewCommentText("");
-    }
-  }, [open, fetchComments]);
-
-  const handleSubmitComment = async () => {
-    if (!newCommentText.trim()) {
-      showSnackbar("Comment cannot be empty", "warning");
-      return;
-    }
-    setSubmittingComment(true);
-    console.log(newCommentText);
-    try {
-      const token = localStorage.getItem("authtoken");
-      const response = await axios.post(
-        `http://localhost:5000/taskcomments/${taskId}`,
-        { comments: newCommentText },
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      console.log(response)
-      if (response.status === 200 || response.status === 201) {
-        showSnackbar("Comment added successfully!");
-        setNewCommentText("");
-        fetchComments(); 
-      } else {
-        throw new Error(response.data?.message || "Failed to add comment");
-      }
-    } catch (error) {
-      console.error("Error adding comment:", error);
-      showSnackbar(
-        error.response?.data?.message ||
-          error.message ||
-          "Failed to add comment",
-        "error"
-      );
-    } finally {
-      setSubmittingComment(false);
-    }
-  };
-
-  const handleDeleteComment = async (commentId) => {
-    if (!commentId) return;
-    
-    setDeletingCommentId(commentId);
-    try {
-      const token = localStorage.getItem("authtoken");
-      const response = await axios.delete(
-        `http://localhost:5000/taskcomments/${commentId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      
-      if (response.status === 200 || response.status === 204) {
-        showSnackbar("Comment deleted successfully!");
-        fetchComments(); // Refresh comments list
-      } else {
-        throw new Error(response.data?.message || "Failed to delete comment");
-      }
-    } catch (error) {
-      console.error("Error deleting comment:", error);
-      showSnackbar(
-        error.response?.data?.message ||
-          error.message ||
-          "Failed to delete comment",
-        "error"
-      );
-    } finally {
-      setDeletingCommentId(null);
-    }
-  };
-
-  const formatDate = (dateString) => {
-    if (!dateString) return "";
-    try {
-      return new Date(dateString).toLocaleString("en-GB", {
-        day: "2-digit",
-        month: "long",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-      });
-    } catch {
-      return dateString;
-    }
-  };
-
-  return (
-    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-      <DialogTitle>Comments for Task </DialogTitle>
-      <DialogContent dividers>
-        {loadingComments ? (
-          <Box sx={{ display: "flex", justifyContent: "center", py: 2 }}>
-            <CircularProgress />
-          </Box>
-        ) : comments.length === 0 ? (
-          <Typography variant="body2" color="textSecondary" sx={{ py: 2 }}>
-            No comments yet. Be the first to add one!
-          </Typography>
-        ) : (
-          <List>
-            {comments.map((comment, index) => (
-              <React.Fragment key={comment.id || index}>
-                <ListItem 
-                  alignItems="flex-start"
-                  sx={{ 
-                    display: "flex", 
-                    justifyContent: "space-between",
-                    alignItems: "flex-start"
-                  }}
-                >
-                  <ListItemText
-                    // primary={
-                    //   <Typography
-                    //     sx={{ display: "inline" }}
-                    //     component="span"
-                    //     variant="body2"
-                    //     color="text.primary"
-                    //   >
-                    //     {comment.user  ? comment.user.username : "Anonymous"}
-                    //   </Typography>
-                    // }
-                    secondary={
-                      <React.Fragment>
-                        <Typography
-                          sx={{ display: "block" }}
-                          component="span"
-                          variant="body2"
-                          color="text.secondary"
-                        >
-                          {comment.comments}
-                        </Typography>
-                        <Typography
-                          sx={{ display: "block" }}
-                          component="span"
-                          variant="caption"
-                          color="text.disabled"
-                        >
-                          {formatDate(comment.createdAt)}
-                        </Typography>
-                      </React.Fragment>
-                    }
-                  />
-                  <IconButton
-                    edge="end"
-                    aria-label="delete comment"
-                    onClick={() => handleDeleteComment(comment.id)}
-                    disabled={deletingCommentId === comment.id}
-                    sx={{ 
-                      ml: 1,
-                      color: "error.main",
-                      "&:hover": {
-                        backgroundColor: "error.light",
-                        color: "error.contrastText"
-                      }
-                    }}
-                  >
-                    {deletingCommentId === comment.id ? (
-                      <CircularProgress size={20} />
-                    ) : (
-                      <DeleteIcon />
-                    )}
-                  </IconButton>
-                </ListItem>
-                {index < comments.length - 1 && <Divider component="li" />}
-              </React.Fragment>
-            ))}
-          </List>
-        )}
-        <Box sx={{ mt: 3, display: "flex", alignItems: "center", gap: 2 }}>
-          <TextField
-            fullWidth
-            label="Add a new comment"
-            multiline
-            rows={2}
-            value={newCommentText}
-            onChange={(e) => setNewCommentText(e.target.value)}
-            disabled={submittingComment}
-          />
-          <Button
-            variant="contained"
-            onClick={handleSubmitComment}
-            disabled={submittingComment}
-            sx={{ flexShrink: 0, height: 'fit-content' }}
-          >
-            {submittingComment ? <CircularProgress size={24} /> : "Post"}
-          </Button>
-        </Box>
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose}>Close</Button>
-      </DialogActions>
-    </Dialog>
-  );
-}
-
-TaskCommentsModal.propTypes = {
-  open: PropTypes.bool.isRequired,
-  onClose: PropTypes.func.isRequired,
-  taskId: PropTypes.string,
-  showSnackbar: PropTypes.func.isRequired,
-};
+// TaskCommentsModal.propTypes = {
+//   open: PropTypes.bool.isRequired,
+//   onClose: PropTypes.func.isRequired,
+//   taskId: PropTypes.string,
+//   showSnackbar: PropTypes.func.isRequired,
+// };
 
 export default function EnhancedTable() {
   const [order, setOrder] = React.useState("asc");
@@ -791,11 +537,11 @@ export default function EnhancedTable() {
     severity: "success",
   });
   const [confirmDialogOpen, setConfirmDialogOpen] = React.useState(false);
-  const [priorityFilter, setPriorityFilter] = React.useState('All'); // New state for priority filter
+  const [priorityFilter, setPriorityFilter] = React.useState("All");
 
-  // New states for comments modal
   const [commentsModalOpen, setCommentsModalOpen] = React.useState(false);
-  const [currentTaskIdForComments, setCurrentTaskIdForComments] = React.useState(null);
+  const [currentTaskIdForComments, setCurrentTaskIdForComments] =
+    React.useState(null);
 
   const showSnackbar = (message, severity = "success") => {
     setSnackbar({
@@ -1044,10 +790,10 @@ export default function EnhancedTable() {
   };
 
   const filteredRows = React.useMemo(() => {
-    if (priorityFilter === 'All') {
+    if (priorityFilter === "All") {
       return rows;
     }
-    return rows.filter(row => row.priority === priorityFilter);
+    return rows.filter((row) => row.priority === priorityFilter);
   }, [rows, priorityFilter]);
 
   const emptyRows =
@@ -1283,7 +1029,7 @@ export default function EnhancedTable() {
         open={commentsModalOpen}
         onClose={handleCloseCommentsModal}
         taskId={currentTaskIdForComments}
-        showSnackbar={showSnackbar} // Pass showSnackbar to comments modal
+        showSnackbar={showSnackbar}
       />
 
       <Snackbar

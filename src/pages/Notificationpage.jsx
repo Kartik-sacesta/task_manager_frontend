@@ -11,27 +11,14 @@ import ListItemText from "@mui/material/ListItemText";
 import Divider from "@mui/material/Divider";
 import Button from "@mui/material/Button";
 import Stack from "@mui/material/Stack";
-import {
-  formatDistanceToNow,
-  isPast,
-  parseISO,
-  isToday,
-  isThisWeek,
-  startOfWeek,
-  addWeeks,
-  endOfDay,
-} from "date-fns";
-import axios from "axios";
+import Chip from "@mui/material/Chip"; 
+import { formatDistanceToNow, parseISO } from "date-fns";
+
+import useNotifications from "./../hooks/useNotifications"; 
 
 export default function NotificationsPage() {
-  const [loading, setLoading] = React.useState(false);
-  const [notifications, setNotifications] = React.useState({
-    today: [],
-    thisWeek: [],
-    nextWeek: [],
-    pastDue: [],
-    all: [],
-  });
+  const { loading, notifications, notificationCounts, error } =
+    useNotifications();
   const [selectedFilter, setSelectedFilter] = React.useState("all");
   const [snackbar, setSnackbar] = React.useState({
     open: false,
@@ -39,13 +26,15 @@ export default function NotificationsPage() {
     severity: "success",
   });
 
-  const showSnackbar = (message, severity = "success") => {
-    setSnackbar({
-      open: true,
-      message,
-      severity,
-    });
-  };
+  React.useEffect(() => {
+    if (error) {
+      setSnackbar({
+        open: true,
+        message: error,
+        severity: "error",
+      });
+    }
+  }, [error]);
 
   const handleCloseSnackbar = () => {
     setSnackbar((prev) => ({ ...prev, open: false }));
@@ -69,104 +58,6 @@ export default function NotificationsPage() {
       return dateString;
     }
   };
-
-  const fetchNotifications = React.useCallback(async () => {
-    setLoading(true);
-    try {
-      const token = localStorage.getItem("authtoken");
-      const response = await axios.get("http://localhost:5000/task", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (response.status === 200) {
-        const allFetchedTasks = Array.isArray(response.data)
-          ? response.data
-          : [];
-        const now = new Date();
-
-        const todayTasks = [];
-        const thisWeekTasks = [];
-        const nextWeekTasks = [];
-        const pastDueTasks = [];
-        const allRelevantTasks = [];
-
-        const startOfNextWeek = startOfWeek(addWeeks(now, 1), {
-          weekStartsOn: 1,
-        });
-        const endOfNextWeek = endOfDay(addWeeks(startOfNextWeek, 6));
-
-        allFetchedTasks.forEach((task) => {
-          const deadlineDate = task.expiredDate || task.expried_date;
-          if (task.status === "completed") {
-            return;
-          }
-
-          allRelevantTasks.push(task);
-
-          if (!deadlineDate) {
-            return;
-          }
-
-          const parsedDeadline = parseISO(deadlineDate);
-
-          if (isPast(parsedDeadline) && !isToday(parsedDeadline)) {
-            pastDueTasks.push(task);
-          } else if (isToday(parsedDeadline)) {
-            todayTasks.push(task);
-          } else if (isThisWeek(parsedDeadline, { weekStartsOn: 1 })) {
-            thisWeekTasks.push(task);
-          } else if (
-            parsedDeadline >= startOfNextWeek &&
-            parsedDeadline <= endOfNextWeek
-          ) {
-            nextWeekTasks.push(task);
-          }
-        });
-
-        const sortTasks = (tasks) =>
-          tasks.sort((a, b) => {
-            const dateA = parseISO(a.expiredDate || a.expried_date);
-            const dateB = parseISO(b.expiredDate || b.expried_date);
-            return dateA.getTime() - dateB.getTime();
-          });
-
-        setNotifications({
-          today: sortTasks(todayTasks),
-          thisWeek: sortTasks(thisWeekTasks),
-          nextWeek: sortTasks(nextWeekTasks),
-          pastDue: sortTasks(pastDueTasks),
-          all: sortTasks(allRelevantTasks),
-        });
-      } else {
-        throw new Error("Failed to fetch tasks.");
-      }
-    } catch (error) {
-      console.error("Error fetching notifications:", error);
-      showSnackbar(
-        error.response?.data?.message ||
-          error.message ||
-          "Failed to fetch notifications.",
-        "error"
-      );
-      setNotifications({
-        today: [],
-        thisWeek: [],
-        nextWeek: [],
-        pastDue: [],
-        all: [],
-      });
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  React.useEffect(() => {
-    fetchNotifications();
-    const intervalId = setInterval(fetchNotifications, 5 * 60 * 1000);
-    return () => clearInterval(intervalId);
-  }, [fetchNotifications]);
 
   const renderTaskList = (tasks, title) => (
     <React.Fragment>
@@ -210,15 +101,14 @@ export default function NotificationsPage() {
                       <br />
                       <Typography variant="body2" color="text.secondary">
                         Deadline:{" "}
-                        {formatDateForDisplay(
-                          task.expiredDate || task.expried_date
-                        )}{" "}
-                        (
-                        {formatDistanceToNow(
-                          parseISO(task.expiredDate || task.expried_date),
-                          { addSuffix: true }
-                        )}
-                        )
+                        {task.expiredDate || task.expried_date
+                          ? `${formatDateForDisplay(
+                              task.expiredDate || task.expried_date
+                            )} (${formatDistanceToNow(
+                              parseISO(task.expiredDate || task.expried_date),
+                              { addSuffix: true }
+                            )})`
+                          : "No deadline"}
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
                         Status: {task.status} | Priority: {task.priority}
@@ -293,7 +183,7 @@ export default function NotificationsPage() {
               },
             }}
           >
-            All
+            All <Chip label={notificationCounts.all} size="small" sx={{ ml: 1 }} />
           </Button>
           <Button
             variant={selectedFilter === "pastDue" ? "contained" : "outlined"}
@@ -309,7 +199,12 @@ export default function NotificationsPage() {
               },
             }}
           >
-            Past Due
+            Past Due{" "}
+            <Chip
+              label={notificationCounts.pastDue}
+              size="small"
+              sx={{ ml: 1 }}
+            />
           </Button>
           <Button
             variant={selectedFilter === "today" ? "contained" : "outlined"}
@@ -320,12 +215,15 @@ export default function NotificationsPage() {
               color: selectedFilter === "today" ? "white" : "warning.main",
               "&:hover": {
                 backgroundColor:
-                  selectedFilter === "today" ? "warning.dark" : "warning.light",
+                  selectedFilter === "today"
+                    ? "warning.dark"
+                    : "warning.light",
                 color: selectedFilter === "today" ? "white" : "warning.dark",
               },
             }}
           >
-            Today
+            Today{" "}
+            <Chip label={notificationCounts.today} size="small" sx={{ ml: 1 }} />
           </Button>
           <Button
             variant={selectedFilter === "thisWeek" ? "contained" : "outlined"}
@@ -341,7 +239,12 @@ export default function NotificationsPage() {
               },
             }}
           >
-            This Week
+            This Week{" "}
+            <Chip
+              label={notificationCounts.thisWeek}
+              size="small"
+              sx={{ ml: 1 }}
+            />
           </Button>
           <Button
             variant={selectedFilter === "nextWeek" ? "contained" : "outlined"}
@@ -359,8 +262,14 @@ export default function NotificationsPage() {
               },
             }}
           >
-            Next Week
+            Next Week{" "}
+            <Chip
+              label={notificationCounts.nextWeek}
+              size="small"
+              sx={{ ml: 1 }}
+            />
           </Button>
+          
         </Stack>
 
         {loading ? (

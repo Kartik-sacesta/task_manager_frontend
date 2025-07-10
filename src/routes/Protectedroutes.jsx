@@ -10,7 +10,7 @@ import Sidebar from "../components/Sidebar";
 import DashboardPage from "../components/Sidebar";
 import Taskuserid from "../pages/Taskuserid";
 import User from "../components/User";
-import Task from "../components/Task";
+import Task from "../pages/Taskpage";
 import NotificationsPage from "../pages/Notificationpage";
 
 function ProtectedLayout() {

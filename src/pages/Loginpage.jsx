@@ -68,7 +68,7 @@ export default function LoginPage() {
       >
         <img src="/src/assets/loginleft.png" />
       </Box>
-
+              
       <Box
         sx={{
           flex: 1,
