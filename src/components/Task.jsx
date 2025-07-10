@@ -30,11 +30,16 @@ import Alert from "@mui/material/Alert";
 import DeleteIcon from "@mui/icons-material/Delete";
 import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
+import CommentIcon from "@mui/icons-material/Comment"; // Import Comment icon
 import { visuallyHidden } from "@mui/utils";
 import axios from "axios";
 import FormControl from "@mui/material/FormControl";
 import InputLabel from "@mui/material/InputLabel";
 import Select from "@mui/material/Select";
+import List from "@mui/material/List";
+import ListItem from "@mui/material/ListItem";
+import ListItemText from "@mui/material/ListItemText";
+import Divider from "@mui/material/Divider";
 
 const headCells = [
   {
@@ -79,7 +84,7 @@ const statusOptions = [
   { value: "pending", label: "Pending" },
   { value: "in-progress", label: "In Progress" },
   { value: "completed", label: "Completed" },
-  { value: "cancelled", label: "Cancelled" },
+ 
 ];
 
 const priorityOptions = [
@@ -236,7 +241,6 @@ function EnhancedTableToolbar(props) {
             ) : (
               <DeleteIcon />
             )}
-            
           </IconButton>
         </Tooltip>
       ) : (
@@ -447,7 +451,8 @@ function CreateTaskModal({
               onChange={handleChange("priority")}
               disabled={loading}
             >
-              {priorityOptions.slice(1).map((option) => ( // Exclude "All" from Create/Edit modal
+              {priorityOptions.slice(1).map((option) => (
+                // Exclude "All" from Create/Edit modal
                 <MenuItem key={option.value} value={option.value}>
                   {option.label}
                 </MenuItem>
@@ -516,6 +521,256 @@ ConfirmationDialog.propTypes = {
   loading: PropTypes.bool.isRequired,
 };
 
+function TaskCommentsModal({ open, onClose, taskId, showSnackbar }) {
+  const [comments, setComments] = React.useState([]);
+  const [newCommentText, setNewCommentText] = React.useState("");
+  const [loadingComments, setLoadingComments] = React.useState(false);
+  const [submittingComment, setSubmittingComment] = React.useState(false);
+  const [deletingCommentId, setDeletingCommentId] = React.useState(null);
+
+  const fetchComments = React.useCallback(async () => {
+    if (!taskId) return;
+    setLoadingComments(true);
+    try {
+      const token = localStorage.getItem("authtoken");
+      const response = await axios.get(
+        `http://localhost:5000/taskcomments/${taskId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      console.log(response);  
+      if (response.status === 200) {
+        setComments(Array.isArray(response.data) ? response.data : []);
+      } else {
+        throw new Error("Failed to fetch comments");
+      }
+    } catch (error) {
+      console.error("Error fetching comments:", error);
+      showSnackbar("Failed to fetch comments", "error");
+      setComments([]);
+    } finally {
+      setLoadingComments(false);
+    }
+  }, [taskId, showSnackbar]);
+
+  React.useEffect(() => {
+    if (open) {
+      fetchComments();
+    } else {
+      // Clear comments when modal closes
+      setComments([]);
+      setNewCommentText("");
+    }
+  }, [open, fetchComments]);
+
+  const handleSubmitComment = async () => {
+    if (!newCommentText.trim()) {
+      showSnackbar("Comment cannot be empty", "warning");
+      return;
+    }
+    setSubmittingComment(true);
+    console.log(newCommentText);
+    try {
+      const token = localStorage.getItem("authtoken");
+      const response = await axios.post(
+        `http://localhost:5000/taskcomments/${taskId}`,
+        { comments: newCommentText },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      console.log(response)
+      if (response.status === 200 || response.status === 201) {
+        showSnackbar("Comment added successfully!");
+        setNewCommentText("");
+        fetchComments(); 
+      } else {
+        throw new Error(response.data?.message || "Failed to add comment");
+      }
+    } catch (error) {
+      console.error("Error adding comment:", error);
+      showSnackbar(
+        error.response?.data?.message ||
+          error.message ||
+          "Failed to add comment",
+        "error"
+      );
+    } finally {
+      setSubmittingComment(false);
+    }
+  };
+
+  const handleDeleteComment = async (commentId) => {
+    if (!commentId) return;
+    
+    setDeletingCommentId(commentId);
+    try {
+      const token = localStorage.getItem("authtoken");
+      const response = await axios.delete(
+        `http://localhost:5000/taskcomments/${commentId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      
+      if (response.status === 200 || response.status === 204) {
+        showSnackbar("Comment deleted successfully!");
+        fetchComments(); // Refresh comments list
+      } else {
+        throw new Error(response.data?.message || "Failed to delete comment");
+      }
+    } catch (error) {
+      console.error("Error deleting comment:", error);
+      showSnackbar(
+        error.response?.data?.message ||
+          error.message ||
+          "Failed to delete comment",
+        "error"
+      );
+    } finally {
+      setDeletingCommentId(null);
+    }
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return "";
+    try {
+      return new Date(dateString).toLocaleString("en-GB", {
+        day: "2-digit",
+        month: "long",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    } catch {
+      return dateString;
+    }
+  };
+
+  return (
+    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
+      <DialogTitle>Comments for Task </DialogTitle>
+      <DialogContent dividers>
+        {loadingComments ? (
+          <Box sx={{ display: "flex", justifyContent: "center", py: 2 }}>
+            <CircularProgress />
+          </Box>
+        ) : comments.length === 0 ? (
+          <Typography variant="body2" color="textSecondary" sx={{ py: 2 }}>
+            No comments yet. Be the first to add one!
+          </Typography>
+        ) : (
+          <List>
+            {comments.map((comment, index) => (
+              <React.Fragment key={comment.id || index}>
+                <ListItem 
+                  alignItems="flex-start"
+                  sx={{ 
+                    display: "flex", 
+                    justifyContent: "space-between",
+                    alignItems: "flex-start"
+                  }}
+                >
+                  <ListItemText
+                    // primary={
+                    //   <Typography
+                    //     sx={{ display: "inline" }}
+                    //     component="span"
+                    //     variant="body2"
+                    //     color="text.primary"
+                    //   >
+                    //     {comment.user  ? comment.user.username : "Anonymous"}
+                    //   </Typography>
+                    // }
+                    secondary={
+                      <React.Fragment>
+                        <Typography
+                          sx={{ display: "block" }}
+                          component="span"
+                          variant="body2"
+                          color="text.secondary"
+                        >
+                          {comment.comments}
+                        </Typography>
+                        <Typography
+                          sx={{ display: "block" }}
+                          component="span"
+                          variant="caption"
+                          color="text.disabled"
+                        >
+                          {formatDate(comment.createdAt)}
+                        </Typography>
+                      </React.Fragment>
+                    }
+                  />
+                  <IconButton
+                    edge="end"
+                    aria-label="delete comment"
+                    onClick={() => handleDeleteComment(comment.id)}
+                    disabled={deletingCommentId === comment.id}
+                    sx={{ 
+                      ml: 1,
+                      color: "error.main",
+                      "&:hover": {
+                        backgroundColor: "error.light",
+                        color: "error.contrastText"
+                      }
+                    }}
+                  >
+                    {deletingCommentId === comment.id ? (
+                      <CircularProgress size={20} />
+                    ) : (
+                      <DeleteIcon />
+                    )}
+                  </IconButton>
+                </ListItem>
+                {index < comments.length - 1 && <Divider component="li" />}
+              </React.Fragment>
+            ))}
+          </List>
+        )}
+        <Box sx={{ mt: 3, display: "flex", alignItems: "center", gap: 2 }}>
+          <TextField
+            fullWidth
+            label="Add a new comment"
+            multiline
+            rows={2}
+            value={newCommentText}
+            onChange={(e) => setNewCommentText(e.target.value)}
+            disabled={submittingComment}
+          />
+          <Button
+            variant="contained"
+            onClick={handleSubmitComment}
+            disabled={submittingComment}
+            sx={{ flexShrink: 0, height: 'fit-content' }}
+          >
+            {submittingComment ? <CircularProgress size={24} /> : "Post"}
+          </Button>
+        </Box>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose}>Close</Button>
+      </DialogActions>
+    </Dialog>
+  );
+}
+
+TaskCommentsModal.propTypes = {
+  open: PropTypes.bool.isRequired,
+  onClose: PropTypes.func.isRequired,
+  taskId: PropTypes.string,
+  showSnackbar: PropTypes.func.isRequired,
+};
+
 export default function EnhancedTable() {
   const [order, setOrder] = React.useState("asc");
   const [orderBy, setOrderBy] = React.useState("title");
@@ -537,6 +792,10 @@ export default function EnhancedTable() {
   });
   const [confirmDialogOpen, setConfirmDialogOpen] = React.useState(false);
   const [priorityFilter, setPriorityFilter] = React.useState('All'); // New state for priority filter
+
+  // New states for comments modal
+  const [commentsModalOpen, setCommentsModalOpen] = React.useState(false);
+  const [currentTaskIdForComments, setCurrentTaskIdForComments] = React.useState(null);
 
   const showSnackbar = (message, severity = "success") => {
     setSnackbar({
@@ -816,6 +1075,17 @@ export default function EnhancedTable() {
     setEditTaskData(null);
   };
 
+  // Handlers for comments modal
+  const handleOpenCommentsModal = (taskId) => {
+    setCurrentTaskIdForComments(taskId);
+    setCommentsModalOpen(true);
+  };
+
+  const handleCloseCommentsModal = () => {
+    setCommentsModalOpen(false);
+    setCurrentTaskIdForComments(null);
+  };
+
   return (
     <Box sx={{ width: "100%" }}>
       <Paper sx={{ width: "100%", mb: 2 }}>
@@ -952,6 +1222,17 @@ export default function EnhancedTable() {
                             <EditIcon fontSize="small" />
                           </IconButton>
                         </Tooltip>
+                        <Tooltip title="View Comments">
+                          <IconButton
+                            size="small"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleOpenCommentsModal(row.id);
+                            }}
+                          >
+                            <CommentIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
                       </TableCell>
                     </TableRow>
                   );
@@ -996,6 +1277,13 @@ export default function EnhancedTable() {
         onConfirm={confirmDelete}
         onCancel={() => setConfirmDialogOpen(false)}
         loading={deleteLoading}
+      />
+
+      <TaskCommentsModal
+        open={commentsModalOpen}
+        onClose={handleCloseCommentsModal}
+        taskId={currentTaskIdForComments}
+        showSnackbar={showSnackbar} // Pass showSnackbar to comments modal
       />
 
       <Snackbar
