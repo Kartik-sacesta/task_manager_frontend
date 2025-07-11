@@ -4,7 +4,7 @@ import LoginPage from "../pages/Loginpage";
 function PublicLayout() {
   return (
     <div style={{ display: "flex", height: "100vh" }}>
-      <LoginPage />
+      {/* <LoginPage /> */}
       <main style={{ flex: 1, overflow: "auto" }}>
         <Outlet />
       </main>

@@ -11,36 +11,44 @@ import {
   Stack,
   IconButton,
   InputAdornment,
+  CircularProgress,
 } from "@mui/material";
 import { Visibility, VisibilityOff, Email, Lock } from "@mui/icons-material";
 import GoogleIcon from "@mui/icons-material/Google";
 import axios from "axios";
 import { toast, ToastContainer } from "react-toastify";
-//import { useNavigate } from 'react-router-dom';
+import "react-toastify/dist/ReactToastify.css";
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setemail] = useState("");
   const [password, setpassword] = useState("");
   const [loading, setLoading] = useState(false);
-  //const navigate = useNavigate();
+  const [isAdminLogin, setIsAdminLogin] = useState(false);
 
   const handleSubmit = async (e) => {
     e?.preventDefault();
+
     if (!email || !password) {
       toast.error("Please enter both email and password");
       return;
     }
+
     setLoading(true);
     try {
-      const res = await axios.post("http://localhost:5000/user/login", {
+      const endpoint = isAdminLogin
+        ? "http://localhost:5000/user/adminlogin"
+        : "http://localhost:5000/user/login";
+
+      const res = await axios.post(endpoint, {
         email,
         password,
       });
+
       toast.success("Login successful");
       localStorage.setItem("authtoken", res.data.token);
+      localStorage.setItem("userdata", JSON.stringify(res.data.user));
       window.location.href = "/";
-      //navigate("/")
     } catch (e) {
       toast.error(
         e.response?.data?.message || "Login failed. Please try again."
@@ -50,78 +58,152 @@ export default function LoginPage() {
     }
   };
 
-  if (loading) {
-    return (
-      <>
-        <h1>loading...</h1>
-      </>
-    );
-  }
-
   return (
-    <Box sx={{ display: "flex" }}>
+    <Box
+      sx={{
+        display: "flex",
+        minHeight: "100vh",
+        fontFamily: "'Inter', sans-serif",
+      }}
+      className="login-container"
+    >
       <Box
         sx={{
           flex: 1,
-          display: { xs: "none", md: "block" },
+          background: "linear-gradient(135deg, #050a2c, #0a1a4e)",
+          color: "#fff",
+          padding: "2rem",
+          display: { xs: "none", md: "flex" },
+          alignItems: "center",
+          justifyContent: "flex-start",
+          position: "relative",
         }}
+        className="login-leftside"
       >
-        <img src="/src/assets/loginleft.png" />
+        <Box className="welcome" sx={{ maxWidth: 360 }}>
+          <Typography
+            variant="h4"
+            fontWeight={700}
+            mb={1}
+            sx={{ fontSize: "2.5rem", lineHeight: 1.2 }}
+            className="title"
+          >
+            Sign In to your Account
+          </Typography>
+          <Typography
+            variant="body1"
+            sx={{ fontSize: "1rem", opacity: 0.85, lineHeight: 1.6 }}
+            className="summary"
+          >
+            Welcome back! please enter your detail
+          </Typography>
+        </Box>
       </Box>
 
       <Box
         sx={{
           flex: 1,
+          background: "#fff",
+          padding: "2rem",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          p: 3,
+          position: "relative",
+          overflow: "hidden",
         }}
+        className="form-area"
       >
         <Box
           sx={{
-            maxWidth: 400,
+            maxWidth: 360,
             width: "100%",
-            p: 4,
+            textAlign: "center",
+            padding: "1rem",
           }}
+          className="form-wrap"
         >
-          <Typography variant="h4" fontWeight={700} mb={1}>
-            Sign In to your Account
-          </Typography>
-          <Typography variant="body1" color="text.secondary" mb={3}>
-            Welcome back! please enter your detail
-          </Typography>
-
-          <TextField
-            fullWidth
-            margin="normal"
-            label="Email"
-            type="email"
-            value={email}
-            onChange={(e) => setemail(e.target.value)}
-            slotProps={{
-              input: {
+          <Box
+            className="form"
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              gap: "1rem",
+              marginBottom: "1rem",
+            }}
+          >
+            <TextField
+              fullWidth
+              label="Email"
+              type="email"
+              value={email}
+              onChange={(e) => setemail(e.target.value)}
+              variant="outlined"
+              sx={{
+                "& .MuiOutlinedInput-root": {
+                  borderRadius: "0.375rem",
+                  "& fieldset": {
+                    borderColor: "#d1d5db",
+                  },
+                  "&:hover fieldset": {
+                    borderColor: "#d1d5db",
+                  },
+                  "&.Mui-focused fieldset": {
+                    boxShadow: "0 0 0 2px rgba(59, 130, 246, 0.5)",
+                    borderColor: "transparent",
+                  },
+                },
+                "& .MuiInputBase-input": {
+                  padding: "0.75rem 1rem",
+                  fontSize: "1rem",
+                },
+                "& .MuiInputLabel-root": {
+                  color: "#374151",
+                  fontSize: "0.875rem",
+                },
+              }}
+              InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
-                    <Email />
+                    <Email sx={{ color: "#6b7280" }} />
                   </InputAdornment>
                 ),
-              },
-            }}
-          />
+              }}
+            />
 
-          <TextField
-            fullWidth
-            margin="normal"
-            label="Password"
-            value={password}
-            onChange={(e) => setpassword(e.target.value)}
-            type={showPassword ? "text" : "password"}
-            slotProps={{
-              input: {
+            <TextField
+              fullWidth
+              label="Password"
+              value={password}
+              onChange={(e) => setpassword(e.target.value)}
+              type={showPassword ? "text" : "password"}
+              variant="outlined"
+              sx={{
+                "& .MuiOutlinedInput-root": {
+                  borderRadius: "0.375rem",
+                  "& fieldset": {
+                    borderColor: "#d1d5db",
+                  },
+                  "&:hover fieldset": {
+                    borderColor: "#d1d5db",
+                  },
+                  "&.Mui-focused fieldset": {
+                    boxShadow: "0 0 0 2px rgba(59, 130, 246, 0.5)",
+                    borderColor: "transparent",
+                  },
+                },
+                "& .MuiInputBase-input": {
+                  padding: "0.75rem 1rem",
+                  fontSize: "1rem",
+                },
+                "& .MuiInputLabel-root": {
+                  color: "#374151",
+                  fontSize: "0.875rem",
+                },
+              }}
+              InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
-                    <Lock />
+                    <Lock sx={{ color: "#6b7280" }} />
                   </InputAdornment>
                 ),
                 endAdornment: (
@@ -129,14 +211,16 @@ export default function LoginPage() {
                     <IconButton
                       edge="end"
                       onClick={() => setShowPassword(!showPassword)}
+                      aria-label="toggle password visibility"
+                      sx={{ color: "#6b7280" }}
                     >
                       {showPassword ? <VisibilityOff /> : <Visibility />}
                     </IconButton>
                   </InputAdornment>
                 ),
-              },
-            }}
-          />
+              }}
+            />
+          </Box>
 
           <Stack
             direction="row"
@@ -144,8 +228,40 @@ export default function LoginPage() {
             alignItems="center"
             my={1}
           >
-            <FormControlLabel control={<Checkbox />} label="Remember me" />
-            <Link href="#" variant="body2">
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={isAdminLogin}
+                  onChange={(e) => setIsAdminLogin(e.target.checked)}
+                  sx={{
+                    color: "#6b7280",
+                    "&.Mui-checked": {
+                      color: "#3b82f6",
+                    },
+                  }}
+                />
+              }
+              label={
+                <Typography variant="body2" sx={{ color: "#4b5563" }}>
+                  Login as Admin
+                </Typography>
+              }
+            />
+            <Link
+              href="#"
+              variant="body2"
+              sx={{
+                fontSize: "0.875rem",
+                color: "#6b7280",
+                textAlign: "right",
+                textDecoration: "none",
+                "&:hover": {
+                  textDecoration: "underline",
+                  color: "#3b82f6", 
+                },
+              }}
+              className="forgot link"
+            >
               Forgot Password?
             </Link>
           </Stack>
@@ -154,26 +270,57 @@ export default function LoginPage() {
             fullWidth
             variant="contained"
             size="large"
-            sx={{ mt: 2, mb: 3 }}
+            sx={{
+              mt: 2,
+              mb: 3,
+              padding: "0.75rem",
+              backgroundColor: "#111827",
+              color: "#fff",
+              fontSize: "1rem",
+              fontWeight: 500,
+              border: "none",
+              borderRadius: "0.375rem",
+              cursor: "pointer",
+              transition: "background-color 0.2s ease",
+              "&:hover": {
+                backgroundColor: "#1f2937",
+              },
+            }}
             onClick={handleSubmit}
+            disabled={loading}
+            className="btn"
           >
-            Sign In
+            {loading ? (
+              <CircularProgress size={24} color="inherit" />
+            ) : (
+              "Sign In"
+            )}
           </Button>
 
-          <Divider>Or sign in with</Divider>
-
-          <Stack direction="row" spacing={2} justifyContent="center" mt={2}>
-            <Button variant="outlined" startIcon={<GoogleIcon />}>
-              Google
-            </Button>
-            <Button variant="outlined" startIcon={<GoogleIcon />}>
-              Google
-            </Button>
-          </Stack>
-
-          <Typography variant="body2" mt={3} textAlign="center">
-            Don’t have an account? <Link href="#">Sign Up</Link>
-          </Typography>
+          <Divider sx={{ my: 2 }}>
+            <Typography
+              variant="body2"
+              color="#4b5563"
+              className="signup-prompt"
+            >
+              Don't have an account?{" "}
+              <Link
+                href="#"
+                variant="body2"
+                sx={{
+                  color: "#3b82f6",
+                  fontWeight: 500,
+                  textDecoration: "none",
+                  "&:hover": {
+                    textDecoration: "underline",
+                  },
+                }}
+                className="link"
+              >
+                Sign Up
+              </Link>
+            </Typography>
+          </Divider>
         </Box>
       </Box>
       <ToastContainer />

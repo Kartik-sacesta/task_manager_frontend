@@ -43,6 +43,9 @@ import TaskCommentsModal from "../modals/TaskCommentsModal";
 import CreateTaskModal from "../modals/CreateTaskModal";
 import ConfirmationDialog from "../modals/ConfirmationDialog";
 import useTasksApi from "../hooks/useTasksApi";
+import Menu from "@mui/material/Menu";
+
+import MoreVertIcon from "@mui/icons-material/MoreVert";
 
 const headCells = [
   {
@@ -109,11 +112,9 @@ function getComparator(order, orderBy) {
 
 function EnhancedTableHead(props) {
   const {
-    onSelectAllClick,
     order,
     orderBy,
-    numSelected,
-    rowCount,
+
     onRequestSort,
   } = props;
   const createSortHandler = (property) => (event) => {
@@ -123,17 +124,7 @@ function EnhancedTableHead(props) {
   return (
     <TableHead>
       <TableRow>
-        <TableCell padding="checkbox">
-          <Checkbox
-            color="primary"
-            indeterminate={numSelected > 0 && numSelected < rowCount}
-            checked={rowCount > 0 && numSelected === rowCount}
-            onChange={onSelectAllClick}
-            inputProps={{
-              "aria-label": "select all tasks",
-            }}
-          />
-        </TableCell>
+        <TableCell padding="checkbox"></TableCell>
         {headCells.map((headCell) => (
           <TableCell
             key={headCell.id}
@@ -176,14 +167,8 @@ EnhancedTableHead.propTypes = {
 };
 
 function EnhancedTableToolbar(props) {
-  const {
-    numSelected,
-    onCreateTask,
-    onDeleteSelected,
-    deleteLoading,
-    priorityFilter,
-    onPriorityFilterChange,
-  } = props;
+  const { numSelected, onCreateTask, priorityFilter, onPriorityFilterChange } =
+    props;
 
   return (
     <Toolbar
@@ -236,25 +221,18 @@ function EnhancedTableToolbar(props) {
           ))}
         </Select>
       </FormControl>
-      {numSelected > 0 ? (
-        <Tooltip title="Delete">
-          <IconButton onClick={onDeleteSelected} disabled={deleteLoading}>
-            {deleteLoading ? <CircularProgress size={24} /> : <DeleteIcon />}
-          </IconButton>
-        </Tooltip>
-      ) : (
-        <Tooltip title="Create Task">
-          <Button
-            variant="contained"
-            size="small"
-            startIcon={<AddIcon />}
-            onClick={onCreateTask}
-            sx={{ textTransform: "none" }}
-          >
-            Create Task
-          </Button>
-        </Tooltip>
-      )}
+
+      <Tooltip title="Create Task">
+        <Button
+          variant="contained"
+          size="small"
+          startIcon={<AddIcon />}
+          onClick={onCreateTask}
+          sx={{ textTransform: "none" }}
+        >
+          Create Task
+        </Button>
+      </Tooltip>
     </Toolbar>
   );
 }
@@ -275,6 +253,8 @@ export default function EnhancedTable() {
   const [page, setPage] = React.useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(5);
 
+  const [anchorEl, setAnchorEl] = React.useState(null);
+  const [openMenuId, setOpenMenuId] = React.useState(null);
   const [modalOpen, setModalOpen] = React.useState(false);
   const [edit, setEdit] = React.useState(false);
   const [editTaskId, setEditTaskId] = React.useState(null);
@@ -298,6 +278,15 @@ export default function EnhancedTable() {
       message,
       severity,
     });
+  };
+  const handleMenuClick = (event, id) => {
+    setAnchorEl(event.currentTarget);
+    setOpenMenuId(id);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+    setOpenMenuId(null);
   };
 
   const handleCloseSnackbar = () => {
@@ -542,19 +531,7 @@ export default function EnhancedTable() {
                       selected={isItemSelected}
                       sx={{ cursor: "pointer" }}
                     >
-                      <TableCell padding="checkbox">
-                        <Checkbox
-                          color="primary"
-                          checked={isItemSelected}
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            handleClick(event, row.id);
-                          }}
-                          inputProps={{
-                            "aria-labelledby": labelId,
-                          }}
-                        />
-                      </TableCell>
+                      <TableCell padding="checkbox"></TableCell>
                       <TableCell
                         component="th"
                         id={labelId}
@@ -609,28 +586,67 @@ export default function EnhancedTable() {
                         </Box>
                       </TableCell>
                       <TableCell align="left">
-                        <Tooltip title="Edit">
-                          <IconButton
-                            size="small"
-                            onClick={(e) => {
-                              e.stopPropagation();
+                        <IconButton
+                          aria-label="more"
+                          id={`long-button-${row.id}`}
+                          aria-controls={
+                            openMenuId === row.id ? "long-menu" : undefined
+                          }
+                          aria-expanded={
+                            openMenuId === row.id ? "true" : undefined
+                          }
+                          aria-haspopup="true"
+                          onClick={(e) => {
+                            e.stopPropagation(); // Prevent row selection
+                            handleMenuClick(e, row.id);
+                          }}
+                          size="small"
+                        >
+                          <MoreVertIcon fontSize="small" />
+                        </IconButton>
+                        <Menu
+                          id="long-menu"
+                          MenuListProps={{
+                            "aria-labelledby": `long-button-${row.id}`,
+                          }}
+                          anchorEl={anchorEl}
+                          open={openMenuId === row.id}
+                          onClose={handleMenuClose}
+                          PaperProps={{
+                            style: {
+                              maxHeight: 48 * 4.5,
+                              width: "15ch",
+                            },
+                          }}
+                        >
+                          <MenuItem
+                            onClick={() => {
                               handleOpenEditModal(row);
+                              handleMenuClose();
                             }}
                           >
-                            <EditIcon fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
-                        <Tooltip title="View Comments">
-                          <IconButton
-                            size="small"
-                            onClick={(e) => {
-                              e.stopPropagation();
+                            <EditIcon fontSize="small" sx={{ mr: 1 }} /> Edit
+                          </MenuItem>
+                          <MenuItem
+                            onClick={() => {
+                              setSelected([row.id]); // Select only this row for deletion
+                              setConfirmDialogOpen(true);
+                              handleMenuClose();
+                            }}
+                          >
+                            <DeleteIcon fontSize="small" sx={{ mr: 1 }} />{" "}
+                            Delete
+                          </MenuItem>
+                          <MenuItem
+                            onClick={() => {
                               handleOpenCommentsModal(row.id);
+                              handleMenuClose();
                             }}
                           >
-                            <CommentIcon fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
+                            <CommentIcon fontSize="small" sx={{ mr: 1 }} />{" "}
+                            Comments
+                          </MenuItem>
+                        </Menu>
                       </TableCell>
                     </TableRow>
                   );
