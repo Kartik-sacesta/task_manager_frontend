@@ -9,8 +9,7 @@ import {
   Button,
   Stack,
 } from "@mui/material";
-import RefreshIcon from "@mui/icons-material/Refresh";
-import CloseIcon from "@mui/icons-material/Close";
+
 
 import {
   PieChart,
@@ -23,11 +22,14 @@ import {
 import useDashboardAnalytics from "../hooks/useDashboard";
 
 const AnalyticsCard = ({ title, value, onClick, sx = {} }) => (
-  <Grid item xs={12} sm={6} md={3}>
+  <Grid item xs={12} sm={6} md={3} sx={{
+    mb:2,
+  }}>
     <Paper
       elevation={3}
       sx={{
         p: 2,
+        
         borderRadius: 2,
         textAlign: "center",
         cursor: onClick ? "pointer" : "default",
@@ -200,18 +202,7 @@ function DashboardPage() {
                 position: "relative",
               }}
             >
-              <Button
-                onClick={() => setSelectedChartType(null)}
-                sx={{
-                  position: "absolute",
-                  top: 8,
-                  right: 8,
-                  minWidth: "unset",
-                  p: 0.5,
-                }}
-              >
-                <CloseIcon />
-              </Button>
+             
               <Typography
                 variant="h5"
                 component="h2"

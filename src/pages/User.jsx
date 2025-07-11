@@ -4,7 +4,7 @@ import { DataGrid } from "@mui/x-data-grid";
 import { Add as AddIcon } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import UserModal from "../modals/UserModal";
-import ActionMenu from "./ActionMenu";
+import ActionMenu from "../components/ActionMenu";
 import { useUserData } from "../hooks/useUserData";
 
 export default function UserTable() {

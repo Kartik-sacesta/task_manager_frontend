@@ -9,15 +9,15 @@ import {
 import Sidebar from "../components/Sidebar";
 import DashboardPage from "../pages/DashboardPage";
 import Taskuserid from "../pages/Taskuserid";
-import User from "../components/User";
+import User from "../pages/User";
 import Task from "../pages/Taskpage";
 import NotificationsPage from "../pages/Notificationpage";
 
 function ProtectedLayout() {
   return (
-    <div style={{ display: "flex", height: "100vh" }}>
+    <div style={{ display: "flex", height: "100vh" ,}}>
       <Sidebar />
-      <main style={{ flex: 1, overflow: "auto" }}>
+      <main style={{ flex: 1, overflow: "auto",paddingLeft:"290px"  }}>
         <Outlet />
       </main>
     </div>

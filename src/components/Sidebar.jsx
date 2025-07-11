@@ -9,11 +9,11 @@ import {
   ListItemText,
   Typography,
   Divider,
+  Chip,
   Button,
   Avatar,
   Stack,
   useTheme,
-  IconButton,
 } from "@mui/material";
 import {
   Dashboard as DashboardIcon,
@@ -21,26 +21,45 @@ import {
   Task as TaskIcon,
   Logout as LogoutIcon,
   Notifications as NotificationsIcon,
-  MenuOpen as MenuOpenIcon,
-  Menu as MenuIcon,
 } from "@mui/icons-material";
 
 const SIDEBAR_WIDTH = 280;
-const COLLAPSED_SIDEBAR_WIDTH = 60;
 
-const Sidebar = ({ collapsed, setCollapsed }) => {
+const Sidebar = () => {
   const location = useLocation();
   const theme = useTheme();
   const userdata = JSON.parse(localStorage.getItem("userdata") || "{}");
 
   const menuItems = [
-    { path: "/dashboard", label: "Dashboard", icon: <DashboardIcon />, roles: ["Admin"] },
-    { path: "/user", label: "Users", icon: <PeopleIcon />, roles: ["Admin"] },
-    { path: "/task", label: "Tasks", icon: <TaskIcon />, roles: ["User"] },
-    { path: "/notification", label: "Notification", icon: <NotificationsIcon />, roles: ["User"] },
+    {
+      path: "/dashboard",
+      label: "Dashboard",
+      icon: <DashboardIcon />,
+      roles: ["Admin"],
+    },
+    {
+      path: "/user",
+      label: "Users",
+      icon: <PeopleIcon />,
+      roles: ["Admin"],
+    },
+    {
+      path: "/task",
+      label: "Tasks",
+      icon: <TaskIcon />,
+      roles: ["User"],
+    },
+    {
+      path: "/notification",
+      label: "Notification",
+      icon: <NotificationsIcon />,
+      roles: ["User"],
+    },
   ];
 
-  const filteredMenuItems = menuItems.filter(item => item.roles.includes(userdata.role));
+  const filteredMenuItems = menuItems.filter((item) =>
+    item.roles.includes(userdata.role)
+  );
 
   const handleLogout = () => {
     localStorage.removeItem("authtoken");
@@ -49,7 +68,24 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
   };
 
   const getUserInitials = (name) => {
-    return name ? name.split(" ").map(word => word[0]).join("").toUpperCase() : "U";
+    return name
+      ? name
+          .split(" ")
+          .map((word) => word[0])
+          .join("")
+          .toUpperCase()
+      : "U";
+  };
+
+  const getRoleColor = (role) => {
+    switch (role) {
+      case "Admin":
+        return "error";
+      case "User":
+        return "primary";
+      default:
+        return "default";
+    }
   };
 
   return (
@@ -59,18 +95,14 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
         top: 0,
         left: 0,
         bottom: 0,
-        width: collapsed ? COLLAPSED_SIDEBAR_WIDTH : SIDEBAR_WIDTH,
+        width: SIDEBAR_WIDTH,
         background: "linear-gradient(135deg, #050a2c, #0a1a4e)",
         color: "#f5f5f5",
         display: "flex",
         flexDirection: "column",
-        transition: theme.transitions.create("width", {
-          easing: theme.transitions.easing.sharp,
-          duration: theme.transitions.duration.enteringScreen,
-        }),
         zIndex: 1000,
         boxShadow: 2,
-        paddingBottom: "env(safe-area-inset-bottom)",
+        paddingBottom: 'env(safe-area-inset-bottom)',
         boxSizing: "border-box",
         borderRight: `1px solid ${theme.palette.divider}`,
       }}
@@ -79,33 +111,20 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
         sx={{
           display: "flex",
           alignItems: "center",
-          justifyContent: collapsed ? "center" : "space-between",
-          p: collapsed ? 1.5 : 2,
-         
-          minHeight: "64px",
-          gap: collapsed ? 0 : "0.75rem",
+          justifyContent: "space-between",
+          p: 2,
+          
+          color: "inherit",
+          minHeight: '64px',
+          gap: '0.75rem',
         }}
       >
-        {!collapsed && (
-          <Typography variant="h5" fontWeight="bold">
-            Taskbar
-          </Typography>
-        )}
-        <IconButton
-          onClick={() => setCollapsed(!collapsed)}
-          sx={{
-            color: "inherit",
-            fontSize: "20px",
-            transition: "transform 0.2s ease",
-            "&:hover": { transform: "scale(1.1)" },
-          }}
-        >
-          {collapsed ? <MenuIcon /> : <MenuOpenIcon />}
-        </IconButton>
+        <Typography variant="h5" fontWeight="bold">
+          Taskbar
+        </Typography>
       </Box>
 
-      {!collapsed && (
-        <Box sx={{ p: 2 }}>
+      <Box sx={{ p: 2, color: "inherit" }}>
           <Stack direction="row" spacing={2} alignItems="center">
             <Avatar
               sx={{
@@ -117,17 +136,26 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
               {getUserInitials(userdata.username)}
             </Avatar>
             <Box>
-              <Typography variant="body2" fontSize={20} fontWeight="bold">
+              <Typography
+                variant="body2"
+                fontSize={20}
+                sx={{ color: "inherit", fontWeight: "bold" }}
+              >
                 {userdata.username || "User"}
               </Typography>
+              <Chip
+                label={userdata.role || "Guest"}
+                size="small"
+                color={getRoleColor(userdata.role)}
+                sx={{ mt: 0.5 }}
+              />
             </Box>
           </Stack>
-        </Box>
-      )}
+      </Box>
 
       <Divider />
 
-      <Box sx={{ flexGrow: 1, p: 1, overflowY: "auto" }}>
+      <Box sx={{ flexGrow: 1, p: 1, overflowY: 'auto' }}>
         <List>
           {filteredMenuItems.map((item) => (
             <ListItem key={item.path} disablePadding sx={{ mb: 0.5 }}>
@@ -139,7 +167,7 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
                   borderRadius: 2,
                   mx: 1,
                   minHeight: 48,
-                  justifyContent: collapsed ? "center" : "initial",
+                  justifyContent: "initial",
                   px: 2.5,
                   "&.Mui-selected": {
                     backgroundColor: "rgba(255,255,255,0.2)",
@@ -154,27 +182,41 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
                   "&:hover": {
                     backgroundColor: "rgba(255,255,255,0.1)",
                   },
+                  transition: theme.transitions.create('background-color', {
+                    duration: theme.transitions.duration.shortest,
+                  }),
                 }}
               >
                 <ListItemIcon
                   sx={{
                     minWidth: 0,
-                    mr: collapsed ? "auto" : 3,
+                    mr: 3,
                     justifyContent: "center",
-                    color: location.pathname === item.path ? "#ffffff" : "inherit",
+                    color:
+                      location.pathname === item.path
+                        ? "#ffffff"
+                        : "inherit",
+                    transition: theme.transitions.create('margin-right', {
+                      duration: theme.transitions.duration.shortest,
+                    }),
                   }}
                 >
                   {item.icon}
                 </ListItemIcon>
-                {!collapsed && (
-                  <ListItemText
-                    primary={item.label}
-                    primaryTypographyProps={{
-                      fontWeight: location.pathname === item.path ? "bold" : "normal",
-                    }}
-                    sx={{ opacity: 1 }}
-                  />
-                )}
+                <ListItemText
+                  primary={item.label}
+                  primaryTypographyProps={{
+                    fontWeight:
+                      location.pathname === item.path ? "bold" : "normal",
+                  }}
+                  sx={{
+                      opacity: 1,
+                      transition: theme.transitions.create('opacity', {
+                          easing: theme.transitions.easing.sharp,
+                          duration: theme.transitions.duration.enteringScreen,
+                      }),
+                  }}
+                />
               </ListItemButton>
             </ListItem>
           ))}
@@ -195,14 +237,18 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
             py: 1.5,
             textTransform: "none",
             fontWeight: "bold",
-            justifyContent: collapsed ? "center" : "initial",
+            justifyContent: "initial",
+            overflow: 'hidden',
             "&:hover": {
               backgroundColor: theme.palette.error.main,
               color: theme.palette.error.contrastText,
             },
+            transition: theme.transitions.create('background-color', {
+              duration: theme.transitions.duration.shortest,
+            }),
           }}
         >
-          {!collapsed && "Logout"}
+          Logout
         </Button>
       </Box>
     </Box>
