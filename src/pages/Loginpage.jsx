@@ -16,39 +16,39 @@ import { Visibility, VisibilityOff, Email, Lock } from "@mui/icons-material";
 import GoogleIcon from "@mui/icons-material/Google";
 import axios from "axios";
 import { toast, ToastContainer } from "react-toastify";
- import { useNavigate } from 'react-router-dom';
-
+//import { useNavigate } from 'react-router-dom';
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setemail] = useState("");
   const [password, setpassword] = useState("");
-   const [loading, setLoading] = useState(false);
-   const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
+  //const navigate = useNavigate();
 
-    const handleSubmit = async (e) => {
-        e?.preventDefault();
-        if (!email || !password) {
-            toast.error("Please enter both email and password");
-            return;
-        }
-        setLoading(true);
-        try {
-            const res = await axios.post("http://localhost:5000/user/login", {
-                email,
-                password,
-            });
-            toast.success("Login successful");
-            localStorage.setItem("authtoken", res.data.token);
-          navigate("/dashboard")
-        } catch (e) {
-            toast.error(
-                e.response?.data?.message || "Login failed. Please try again."
-            );
-        } finally {
-            setLoading(false);
-        }
-    };
+  const handleSubmit = async (e) => {
+    e?.preventDefault();
+    if (!email || !password) {
+      toast.error("Please enter both email and password");
+      return;
+    }
+    setLoading(true);
+    try {
+      const res = await axios.post("http://localhost:5000/user/login", {
+        email,
+        password,
+      });
+      toast.success("Login successful");
+      localStorage.setItem("authtoken", res.data.token);
+      window.location.href = "/";
+      //navigate("/")
+    } catch (e) {
+      toast.error(
+        e.response?.data?.message || "Login failed. Please try again."
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -59,7 +59,7 @@ export default function LoginPage() {
   }
 
   return (
-    <Box sx={{ display: "flex" }} >
+    <Box sx={{ display: "flex" }}>
       <Box
         sx={{
           flex: 1,
@@ -68,7 +68,7 @@ export default function LoginPage() {
       >
         <img src="/src/assets/loginleft.png" />
       </Box>
-              
+
       <Box
         sx={{
           flex: 1,

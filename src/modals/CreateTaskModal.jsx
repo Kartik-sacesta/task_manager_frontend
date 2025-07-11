@@ -54,9 +54,9 @@ function CreateTaskModal({
         description: initialData.description || "",
         expiredDate: initialData.expiredDate
           ? initialData.expiredDate.split("T")[0]
-          : initialData.expried_date // Corrected typo here if 'expried_date' is possible
-          ? initialData.expried_date.split("T")[0]
-          : "",
+          : initialData.expried_date
+            ? initialData.expried_date.split("T")[0]
+            : "",
         status: initialData.status || "pending",
         priority: initialData.priority || "Medium",
       });
@@ -116,15 +116,14 @@ function CreateTaskModal({
     if (validateForm()) {
       const submitData = {
         ...formData,
-        expried_date: new Date(formData.expiredDate).toISOString(), // Ensure correct field name for backend
+        expried_date: new Date(formData.expiredDate).toISOString(),
       };
-      delete submitData.expiredDate; // Remove this if backend expects 'expiredDate' directly
+      delete submitData.expiredDate;
       onSubmit(submitData);
     }
   };
 
   const handleClose = () => {
-    // Reset form on close
     setFormData({
       title: "",
       description: "",
@@ -247,15 +246,17 @@ function CreateTaskModal({
           onClick={handleSubmit}
           variant="contained"
           disabled={loading}
-          startIcon={loading ? <CircularProgress size={16} color="inherit" /> : null} // Added color="inherit"
+          startIcon={
+            loading ? <CircularProgress size={16} color="inherit" /> : null
+          }
         >
           {loading
             ? edit
               ? "Saving..."
               : "Creating..."
             : edit
-            ? "Save Changes"
-            : "Create Task"}
+              ? "Save Changes"
+              : "Create Task"}
         </Button>
       </DialogActions>
     </Dialog>

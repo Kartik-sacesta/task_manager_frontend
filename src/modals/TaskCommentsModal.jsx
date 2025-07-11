@@ -15,13 +15,12 @@ import {
   CircularProgress,
   IconButton,
   Stack,
- 
 } from "@mui/material";
-import AddCommentIcon from "@mui/icons-material/AddComment"; 
+import AddCommentIcon from "@mui/icons-material/AddComment";
 import CloseIcon from "@mui/icons-material/Close";
-import DeleteIcon from "@mui/icons-material/Delete"; // Added for delete button
+import DeleteIcon from "@mui/icons-material/Delete";
 import axios from "axios";
-import { format } from "date-fns"; // For formatting comment dates
+import { format } from "date-fns";
 
 function TaskCommentsModal({ open, onClose, taskId, showSnackbar }) {
   const [comments, setComments] = React.useState([]);
@@ -36,14 +35,14 @@ function TaskCommentsModal({ open, onClose, taskId, showSnackbar }) {
     try {
       const token = localStorage.getItem("authtoken");
       const response = await axios.get(
-        `http://localhost:5000/taskcomments/${taskId}`, // Endpoint to get comments for a specific task
+        `http://localhost:5000/taskcomments/${taskId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         }
       );
-      // Assuming response.data is an array of comments
+
       if (response.status === 200) {
         setComments(Array.isArray(response.data) ? response.data : []);
       } else {
@@ -62,7 +61,6 @@ function TaskCommentsModal({ open, onClose, taskId, showSnackbar }) {
     if (open) {
       fetchComments();
     } else {
-      // Clear comments and new comment text when modal closes
       setComments([]);
       setNewCommentText("");
     }
@@ -77,8 +75,8 @@ function TaskCommentsModal({ open, onClose, taskId, showSnackbar }) {
     try {
       const token = localStorage.getItem("authtoken");
       const response = await axios.post(
-        `http://localhost:5000/taskcomments/${taskId}`, 
-        { comments: newCommentText }, 
+        `http://localhost:5000/taskcomments/${taskId}`,
+        { comments: newCommentText },
         {
           headers: {
             "Content-Type": "application/json",
@@ -89,8 +87,8 @@ function TaskCommentsModal({ open, onClose, taskId, showSnackbar }) {
 
       if (response.status === 200 || response.status === 201) {
         showSnackbar("Comment added successfully!");
-        setNewCommentText(""); // Clear input field
-        fetchComments(); // Refresh the list of comments
+        setNewCommentText("");
+        fetchComments();
       } else {
         throw new Error(response.data?.message || "Failed to add comment");
       }
@@ -114,7 +112,7 @@ function TaskCommentsModal({ open, onClose, taskId, showSnackbar }) {
     try {
       const token = localStorage.getItem("authtoken");
       const response = await axios.delete(
-        `http://localhost:5000/taskcomments/${commentId}`, // Endpoint to delete a specific comment
+        `http://localhost:5000/taskcomments/${commentId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -124,7 +122,7 @@ function TaskCommentsModal({ open, onClose, taskId, showSnackbar }) {
 
       if (response.status === 200 || response.status === 204) {
         showSnackbar("Comment deleted successfully!");
-        fetchComments(); // Refresh comments list
+        fetchComments();
       } else {
         throw new Error(response.data?.message || "Failed to delete comment");
       }
@@ -144,10 +142,9 @@ function TaskCommentsModal({ open, onClose, taskId, showSnackbar }) {
   const formatDate = (dateString) => {
     if (!dateString) return "";
     try {
-      // Use date-fns for consistent formatting
       return format(new Date(dateString), "dd LLL yyyy, hh:mm a");
     } catch {
-      return dateString; // Fallback if date-fns fails
+      return dateString;
     }
   };
 
@@ -205,7 +202,8 @@ function TaskCommentsModal({ open, onClose, taskId, showSnackbar }) {
                           variant="body2"
                           color="text.secondary"
                         >
-                          {comment.comment} {/* Assuming comment text is 'comment' field */}
+                          {comment.comment}{" "}
+                          {/* Assuming comment text is 'comment' field */}
                         </Typography>
                         <Typography
                           sx={{ display: "block" }}
@@ -221,7 +219,9 @@ function TaskCommentsModal({ open, onClose, taskId, showSnackbar }) {
                   <IconButton
                     edge="end"
                     aria-label="delete comment"
-                    onClick={() => handleDeleteComment(comment._id || comment.id)}
+                    onClick={() =>
+                      handleDeleteComment(comment._id || comment.id)
+                    }
                     disabled={deletingCommentId === (comment._id || comment.id)}
                     sx={{
                       ml: 1,
@@ -261,7 +261,11 @@ function TaskCommentsModal({ open, onClose, taskId, showSnackbar }) {
             sx={{ flexShrink: 0, height: "fit-content" }}
             startIcon={submittingComment ? null : <AddCommentIcon />}
           >
-            {submittingComment ? <CircularProgress size={24} color="inherit" /> : "Post"}
+            {submittingComment ? (
+              <CircularProgress size={24} color="inherit" />
+            ) : (
+              "Post"
+            )}
           </Button>
         </Box>
       </DialogContent>

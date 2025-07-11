@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import { useParams } from "react-router-dom";
 import { DataGrid } from "@mui/x-data-grid";
 import {
@@ -15,184 +15,260 @@ import {
   IconButton,
   Menu,
   MenuItem,
-  Snackbar, // Added for global snackbar
-  Alert, // Added for global snackbar
+  Snackbar,
+  Alert,
+  Grid,
+  Tooltip,
+  Paper,
 } from "@mui/material";
-import AnalyticsIcon from "@mui/icons-material/Analytics";
-import CloseIcon from "@mui/icons-material/Close";
-import MoreVertIcon from "@mui/icons-material/MoreVert";
-import CommentIcon from "@mui/icons-material/Comment";
+import {
+  Analytics as AnalyticsIcon,
+  Close as CloseIcon,
+  MoreVert as MoreVertIcon,
+  Comment as CommentIcon,
+  Refresh as RefreshIcon,
+} from "@mui/icons-material";
 
 import useUserTasks from "../hooks/useUserTasks";
 import TaskCommentsModal from "../modals/TaskCommentsModal";
 
-export default function Taskuserid() {
+const PAGINATION_OPTIONS = [5, 10, 20, 50];
+const INITIAL_PAGE_SIZE = 10;
+const SNACKBAR_DURATION = 6000;
+
+const STATUS_COLORS = {
+  completed: "success",
+  "in-progress": "info",
+  pending: "warning",
+  default: "default",
+};
+const PRIORITY_COLORS = {
+  High: "error",
+  Medium: "primary",
+  Low: "default",
+  Urgent: "secondary",
+};
+
+const StatusChip = React.memo(({ status }) => (
+  <Chip
+    label={status}
+    color={STATUS_COLORS[status] || STATUS_COLORS.default}
+    size="small"
+    variant="outlined"
+  />
+));
+
+const PriorityChip = React.memo(({ priority }) => (
+  <Chip
+    label={priority}
+    color={PRIORITY_COLORS[priority] || PRIORITY_COLORS.Low}
+    size="small"
+  />
+));
+
+const ActionsCell = React.memo(({ task, onMenuClick }) => (
+  <Tooltip title="More options">
+    <IconButton
+      aria-label={`More options for task ${task.title}`}
+      onClick={(event) => onMenuClick(event, task)}
+      size="small"
+    >
+      <MoreVertIcon />
+    </IconButton>
+  </Tooltip>
+));
+
+const AnalyticsMetric = React.memo(({ label, value, color = "primary" }) => (
+  <Grid container spacing={1} alignItems="center">
+    <Grid item xs={7}>
+      <Typography variant="body2" fontWeight="medium">
+        {label}:
+      </Typography>
+    </Grid>
+    <Grid item xs={5}>
+      <Chip
+        label={value || 0}
+        color={color}
+        size="small"
+        sx={{ width: "100%", justifyContent: "center" }}
+      />
+    </Grid>
+  </Grid>
+));
+
+export default function TaskUserId() {
   const params = useParams();
   const { id: userId } = params;
 
-  const { tasks, loading, error, taskCounts, fetchUserTasks } =
-    useUserTasks(userId);
+  const {
+    tasks,
+    loading,
+    error,
+    taskAnalytics,
+    analyticsLoading,
+    analyticsError,
+    fetchUserTasks,
+    fetchTaskAnalytics,
+  } = useUserTasks(userId);
+
   const [openAnalyticsModal, setOpenAnalyticsModal] = useState(false);
   const [openCommentsModal, setOpenCommentsModal] = useState(false);
-
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedTaskForMenu, setSelectedTaskForMenu] = useState(null);
-  const openMenu = Boolean(anchorEl);
-
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: "",
     severity: "success",
   });
 
-  const showSnackbar = (message, severity = "success") => {
-    setSnackbar({
-      open: true,
-      message,
-      severity,
-    });
-  };
+  const openMenu = Boolean(anchorEl);
 
-  const handleCloseSnackbar = () => {
+  const processedTasks = useMemo(
+    () =>
+      tasks.map((task) => ({
+        ...task,
+        id: task._id || task.id,
+      })),
+    [tasks]
+  );
+
+  // Callback functions
+  const showSnackbar = useCallback((message, severity = "success") => {
+    setSnackbar({ open: true, message, severity });
+  }, []);
+
+  const handleCloseSnackbar = useCallback(() => {
     setSnackbar((prev) => ({ ...prev, open: false }));
-  };
+  }, []);
 
-  const handleMenuClick = (event, task) => {
+  const handleMenuClick = useCallback((event, task) => {
     setAnchorEl(event.currentTarget);
     setSelectedTaskForMenu(task);
-  };
+  }, []);
 
-  const handleMenuClose = () => {
+  const handleMenuClose = useCallback(() => {
     setAnchorEl(null);
     setSelectedTaskForMenu(null);
-  };
+  }, []);
 
-  const handleOpenAnalyticsModal = () => {
+  const handleOpenAnalyticsModal = useCallback(() => {
     handleMenuClose();
+    fetchTaskAnalytics();
     setOpenAnalyticsModal(true);
-  };
+  }, [fetchTaskAnalytics, handleMenuClose]);
 
-  const handleCloseAnalyticsModal = () => {
+  const handleCloseAnalyticsModal = useCallback(() => {
     setOpenAnalyticsModal(false);
-  };
+  }, []);
 
-  const handleOpenCommentsModal = () => {
+  const handleOpenCommentsModal = useCallback(() => {
     handleMenuClose();
     if (selectedTaskForMenu) {
       setOpenCommentsModal(true);
     } else {
       showSnackbar("No task selected for comments.", "error");
     }
-  };
+  }, [selectedTaskForMenu, handleMenuClose, showSnackbar]);
 
-  const handleCloseCommentsModal = () => {
+  const handleCloseCommentsModal = useCallback(() => {
     setOpenCommentsModal(false);
     setSelectedTaskForMenu(null);
-  };
+  }, []);
 
-  const columns = [
-    { field: "id", headerName: "ID", width: 90 },
-    {
-      field: "title",
-      headerName: "Title",
-      width: 180,
-      editable: false,
-    },
-    {
-      field: "description",
-      headerName: "Description",
-      flex: 1,
-      editable: false,
-      minWidth: 200,
-    },
-    {
-      field: "status",
-      headerName: "Status",
-      width: 120,
-      editable: false,
-      renderCell: (params) => {
-        let color = "default";
-        if (params.value === "completed") {
-          color = "success";
-        } else if (params.value === "in-progress") {
-          color = "info";
-        } else if (params.value === "pending") {
-          color = "warning";
-        }
-        return <Chip label={params.value} color={color} size="small" />;
+  const columns = useMemo(
+    () => [
+      {
+        field: "id",
+        headerName: "ID",
+        width: 90,
+        sortable: false,
       },
-    },
-    {
-      field: "priority",
-      headerName: "Priority",
-      width: 100,
-      editable: false,
-    },
-    // {
-    //   field: "expiredDate",
-    //   headerName: "Deadline",
-    //   width: 160,
-    //   editable: false,
-    //   valueFormatter: (params) => {
-    //     if (params.value) {
-    //       try {
-    //         return new Date(params.value).toLocaleDateString("en-GB");
-    //       } catch (e) {
-    //         console.error("Error formatting date:", params.value, e);
-    //         return "Invalid Date";
-    //       }
-    //     }
-    //     return "N/A";
-    //   },
-    // },
-    {
-      field: "actions",
-      headerName: "Actions",
-      sortable: false,
-      width: 120,
-      renderCell: (params) => (
-        <>
-          <IconButton
-            aria-label="more"
-            aria-controls={openMenu ? "task-row-menu" : undefined}
-            aria-expanded={openMenu ? "true" : undefined}
-            aria-haspopup="true"
-            onClick={(event) => handleMenuClick(event, params.row)}
-            size="small"
-          >
-            <MoreVertIcon />
-          </IconButton>
-        </>
-      ),
-    },
-  ];
+      {
+        field: "title",
+        headerName: "Title",
+        width: 200,
+        editable: false,
+        renderCell: (params) => (
+          <Tooltip title={params.value} placement="top">
+            <Typography variant="body2" noWrap>
+              {params.value}
+            </Typography>
+          </Tooltip>
+        ),
+      },
+      {
+        field: "description",
+        headerName: "Description",
+        flex: 1,
+        editable: false,
+        minWidth: 250,
+        renderCell: (params) => (
+          <Tooltip title={params.value} placement="top">
+            <Typography variant="body2" noWrap>
+              {params.value}
+            </Typography>
+          </Tooltip>
+        ),
+      },
+      {
+        field: "status",
+        headerName: "Status",
+        width: 130,
+        editable: false,
+        renderCell: (params) => <StatusChip status={params.value} />,
+      },
+      {
+        field: "priority",
+        headerName: "Priority",
+        width: 110,
+        editable: false,
+        renderCell: (params) => <PriorityChip priority={params.value} />,
+      },
+      {
+        field: "actions",
+        headerName: "Actions",
+        sortable: false,
+        width: 100,
+        renderCell: (params) => (
+          <ActionsCell task={params.row} onMenuClick={handleMenuClick} />
+        ),
+      },
+    ],
+    [handleMenuClick]
+  );
 
+  // Loading state
   if (loading) {
     return (
       <Box
         sx={{
           display: "flex",
+          flexDirection: "column",
           justifyContent: "center",
           alignItems: "center",
-          height: "100vh",
+          height: "60vh",
+          gap: 2,
         }}
       >
-        <CircularProgress />
-        <Typography variant="h6" sx={{ ml: 2 }}>
+        <CircularProgress size={60} />
+        <Typography variant="h6" color="text.secondary">
           Loading tasks...
         </Typography>
       </Box>
     );
   }
 
+  // Error state
   if (error) {
     return (
-      <Box
+      <Paper
+        elevation={2}
         sx={{
-          color: "error.main",
-          padding: 4,
+          p: 4,
           textAlign: "center",
           mt: 4,
+          backgroundColor: "error.light",
+          color: "error.contrastText",
         }}
       >
         <Typography variant="h5" component="h3" gutterBottom>
@@ -201,70 +277,88 @@ export default function Taskuserid() {
         <Typography variant="body1" paragraph>
           {error}
         </Typography>
-        <Button variant="contained" onClick={fetchUserTasks}>
-          Retry
-        </Button>
-      </Box>
+        <Stack direction="row" spacing={2} justifyContent="center">
+          <Button variant="contained" onClick={fetchUserTasks} color="primary">
+            Retry
+          </Button>
+        </Stack>
+      </Paper>
     );
   }
 
   return (
     <Box sx={{ p: 3 }}>
-      <Stack
-        direction="row"
-        justifyContent="space-between"
-        alignItems="center"
-        sx={{ mb: 2 }}
-      >
-        <Typography variant="h4" component="h2">
-          Tasks for User: {userId}
-        </Typography>
-      </Stack>
+      {/* Header */}
+      <Paper elevation={1} sx={{ p: 2, mb: 3 }}>
+        <Stack
+          direction="row"
+          justifyContent="space-between"
+          alignItems="center"
+        >
+          <Typography variant="h4" component="h1">
+            Tasks for User: {userId}
+          </Typography>
+        </Stack>
+      </Paper>
 
-      <div style={{ height: 400, width: "100%" }}>
+      <Paper elevation={1} sx={{ height: "100%", width: "100%" }}>
         <DataGrid
-          rows={tasks.map((task) => ({ ...task, id: task._id || task.id }))}
+          rows={processedTasks}
           columns={columns}
-          pageSizeOptions={[5, 10, 20]}
+          pageSizeOptions={PAGINATION_OPTIONS}
           initialState={{
             pagination: {
               paginationModel: {
-                pageSize: 5,
+                pageSize: INITIAL_PAGE_SIZE,
               },
             },
           }}
           disableRowSelectionOnClick
+          sx={{
+            "& .MuiDataGrid-cell:focus": {
+              outline: "none",
+            },
+          }}
+          loading={loading}
+          localeText={{
+            noRowsLabel: "No tasks found for this user",
+          }}
         />
-      </div>
+      </Paper>
 
       <Menu
         id="task-row-menu"
-        MenuListProps={{
-          "aria-labelledby": "more-options-button",
-        }}
         anchorEl={anchorEl}
         open={openMenu}
         onClose={handleMenuClose}
-        PaperProps={{
-          style: {
-            maxHeight: 48 * 4.5,
-            width: "20ch",
-          },
+        anchorOrigin={{
+          vertical: "bottom",
+          horizontal: "right",
+        }}
+        transformOrigin={{
+          vertical: "top",
+          horizontal: "right",
         }}
       >
         <MenuItem onClick={handleOpenAnalyticsModal}>
-          <AnalyticsIcon sx={{ mr: 1 }} /> View Overall Analytics
+          <AnalyticsIcon sx={{ mr: 1 }} />
+          View Analytics
         </MenuItem>
         <MenuItem onClick={handleOpenCommentsModal}>
-          <CommentIcon sx={{ mr: 1 }} /> View/Add Comments
+          <CommentIcon sx={{ mr: 1 }} />
+          View/Add Comments
         </MenuItem>
       </Menu>
 
+      {/* Analytics Modal */}
       <Dialog
         open={openAnalyticsModal}
         onClose={handleCloseAnalyticsModal}
-        maxWidth="sm"
+        maxWidth="md"
         fullWidth
+        PaperProps={{
+          sx: { minHeight: "400px" },
+        }}
       >
         <DialogTitle>
           <Stack
@@ -272,34 +366,133 @@ export default function Taskuserid() {
             justifyContent="space-between"
             alignItems="center"
           >
-            <Typography variant="h6">Task Status Overview</Typography>
-            <IconButton aria-label="close" onClick={handleCloseAnalyticsModal}>
+            <Typography variant="h6">Task Analytics Overview</Typography>
+            <IconButton
+              aria-label="close analytics modal"
+              onClick={handleCloseAnalyticsModal}
+            >
               <CloseIcon />
             </IconButton>
           </Stack>
         </DialogTitle>
         <DialogContent dividers>
-          <Stack spacing={2} sx={{ py: 2 }}>
-            <Typography variant="body1">
-              <strong>Total Tasks:</strong>{" "}
-              <Chip label={taskCounts.total} color="primary" />
+          {analyticsLoading ? (
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                minHeight: 200,
+                gap: 2,
+              }}
+            >
+              <CircularProgress />
+              <Typography variant="body1">Loading analytics...</Typography>
+            </Box>
+          ) : analyticsError ? (
+            <Box sx={{ textAlign: "center", p: 4 }}>
+              <Typography variant="body1" color="error" gutterBottom>
+                Error loading analytics: {analyticsError}
+              </Typography>
+              <Button onClick={fetchTaskAnalytics} variant="outlined">
+                Retry Analytics
+              </Button>
+            </Box>
+          ) : taskAnalytics ? (
+            <Grid container spacing={3}>
+              {/* Status Summary */}
+              <Grid item xs={12} md={4}>
+                <Paper elevation={2} sx={{ p: 2 }}>
+                  <Typography variant="h6" gutterBottom color="primary">
+                    Status Summary
+                  </Typography>
+                  <Stack spacing={1}>
+                    <AnalyticsMetric
+                      label="Pending"
+                      value={taskAnalytics.statusSummary?.pending}
+                      color="warning"
+                    />
+                    <AnalyticsMetric
+                      label="In-Progress"
+                      value={taskAnalytics.statusSummary?.["in-progress"]}
+                      color="info"
+                    />
+                    <AnalyticsMetric
+                      label="Completed"
+                      value={taskAnalytics.statusSummary?.completed}
+                      color="success"
+                    />
+                  </Stack>
+                </Paper>
+              </Grid>
+
+              {/* Priority Summary */}
+              <Grid item xs={12} md={4}>
+                <Paper elevation={2} sx={{ p: 2 }}>
+                  <Typography variant="h6" gutterBottom color="primary">
+                    Priority Summary
+                  </Typography>
+                  <Stack spacing={1}>
+                    <AnalyticsMetric
+                      label="Urgent"
+                      value={taskAnalytics.prioritySummary?.Urgent}
+                      color="secondary"
+                    />
+                    <AnalyticsMetric
+                      label="High"
+                      value={taskAnalytics.prioritySummary?.High}
+                      color="error"
+                    />
+                    <AnalyticsMetric
+                      label="Medium"
+                      value={taskAnalytics.prioritySummary?.Medium}
+                      color="primary"
+                    />
+                    <AnalyticsMetric
+                      label="Low"
+                      value={taskAnalytics.prioritySummary?.Low}
+                      color="default"
+                    />
+                  </Stack>
+                </Paper>
+              </Grid>
+
+              {/* Overall Metrics */}
+              <Grid item xs={12} md={4}>
+                <Paper elevation={2} sx={{ p: 2 }}>
+                  <Typography variant="h6" gutterBottom color="primary">
+                    Overall Metrics
+                  </Typography>
+                  <Stack spacing={1}>
+                    <AnalyticsMetric
+                      label="Total Active"
+                      value={taskAnalytics.totalActiveTasks}
+                      color="primary"
+                    />
+                    <AnalyticsMetric
+                      label="Overdue"
+                      value={taskAnalytics.overdueTasksCount}
+                      color="error"
+                    />
+                    <AnalyticsMetric
+                      label="Due Soon"
+                      value={taskAnalytics.tasksDueSoonCount}
+                      color="warning"
+                    />
+                  </Stack>
+                </Paper>
+              </Grid>
+            </Grid>
+          ) : (
+            <Typography variant="body1" sx={{ textAlign: "center", p: 4 }}>
+              No analytics data available.
             </Typography>
-            <Typography variant="body1">
-              <strong>Pending:</strong>{" "}
-              <Chip label={taskCounts.pending} color="warning" />
-            </Typography>
-            <Typography variant="body1">
-              <strong>In-Progress:</strong>{" "}
-              <Chip label={taskCounts.inProgress} color="info" />
-            </Typography>
-            <Typography variant="body1">
-              <strong>Completed:</strong>{" "}
-              <Chip label={taskCounts.completed} color="success" />
-            </Typography>
-          </Stack>
+          )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseAnalyticsModal}>Close</Button>
+          <Button onClick={handleCloseAnalyticsModal} variant="outlined">
+            Close
+          </Button>
         </DialogActions>
       </Dialog>
 
@@ -314,7 +507,7 @@ export default function Taskuserid() {
 
       <Snackbar
         open={snackbar.open}
-        autoHideDuration={6000}
+        autoHideDuration={SNACKBAR_DURATION}
         onClose={handleCloseSnackbar}
         anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
       >
@@ -322,6 +515,8 @@ export default function Taskuserid() {
           onClose={handleCloseSnackbar}
           severity={snackbar.severity}
           sx={{ width: "100%" }}
+          elevation={6}
+          variant="filled"
         >
           {snackbar.message}
         </Alert>

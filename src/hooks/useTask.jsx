@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 
@@ -23,15 +22,12 @@ const useTasks = (userId) => {
     setError(null);
     try {
       const token = localStorage.getItem("authtoken");
-      const response = await axios.get(
-        `http://localhost:5000/task/`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
+      const response = await axios.get(`http://localhost:5000/task/`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
 
       if (response.status === 200) {
         const fetchedTasks = Array.isArray(response.data.task)
@@ -74,12 +70,11 @@ const useTasks = (userId) => {
     } finally {
       setLoading(false);
     }
-  }, [userId]); 
+  }, [userId]);
 
   useEffect(() => {
     console.log("Fetching tasks for user:", userId);
     fetchUserTasks();
-    
   }, [fetchUserTasks]);
 
   return { tasks, loading, error, taskCounts, fetchUserTasks };

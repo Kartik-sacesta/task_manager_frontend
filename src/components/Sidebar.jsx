@@ -1,5 +1,5 @@
 import React from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import {
   Box,
   Drawer,
@@ -22,19 +22,25 @@ import {
   People as PeopleIcon,
   Task as TaskIcon,
   Logout as LogoutIcon,
-
 } from "@mui/icons-material";
-import NotificationsIcon from '@mui/icons-material/Notifications';
+
+import NotificationsIcon from "@mui/icons-material/Notifications";
 const SIDEBAR_WIDTH = 280;
 
 const Sidebar = () => {
   const location = useLocation();
-  const navigate = useNavigate();
+
   const theme = useTheme();
 
   const userdata = JSON.parse(localStorage.getItem("userdata") || "{}");
 
   const menuItems = [
+    {
+      path: "/dashboard",
+      label: "Dashboard",
+      icon: <DashboardIcon />,
+      roles: ["Admin"],
+    },
     {
       path: "/user",
       label: "Users",
@@ -55,14 +61,14 @@ const Sidebar = () => {
     },
   ];
 
-  // Filter menu items based on user role
   const filteredMenuItems = menuItems.filter((item) =>
     item.roles.includes(userdata.role)
   );
 
   const handleLogout = () => {
     localStorage.removeItem("authtoken");
-    navigate("/");
+    localStorage.removeItem("userdata");
+    window.location.href = "/";
   };
 
   const getUserInitials = (name) => {
@@ -101,7 +107,6 @@ const Sidebar = () => {
         },
       }}
     >
-
       <Box
         sx={{
           p: 3,
@@ -134,14 +139,14 @@ const Sidebar = () => {
                 fontSize: "1rem",
               }}
             >
-              {getUserInitials(userdata.name)}
+              {getUserInitials(userdata.username)}
             </Avatar>
             <Box>
               <Typography
                 variant="body2"
                 sx={{ color: "inherit", fontWeight: "bold" }}
               >
-                {userdata.name || "User"}
+                {userdata.username || "User"}
               </Typography>
               <Chip
                 label={userdata.role || "Guest"}

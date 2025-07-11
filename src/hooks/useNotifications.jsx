@@ -1,4 +1,3 @@
-// useNotifications.js
 import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import {
@@ -59,16 +58,15 @@ const useNotifications = () => {
         const completedTasks = [];
         const inProgressTasks = [];
         const pendingTasks = [];
-        const allRelevantTasks = []; 
+        const allRelevantTasks = [];
         const startOfNextWeek = startOfWeek(addWeeks(now, 1), {
-          weekStartsOn: 1, 
+          weekStartsOn: 1,
         });
-        const endOfNextWeek = endOfDay(addWeeks(startOfNextWeek, 6)); 
+        const endOfNextWeek = endOfDay(addWeeks(startOfNextWeek, 6));
 
         allFetchedTasks.forEach((task) => {
           const deadlineDate = task.expiredDate || task.expried_date;
 
-          
           if (task.status === "completed") {
             completedTasks.push(task);
           } else if (task.status === "in-progress") {
@@ -77,12 +75,11 @@ const useNotifications = () => {
             pendingTasks.push(task);
           }
 
-          
           if (task.status !== "completed") {
-            allRelevantTasks.push(task); 
+            allRelevantTasks.push(task);
 
             if (!deadlineDate) {
-              return; 
+              return;
             }
 
             const parsedDeadline = parseISO(deadlineDate);
@@ -126,7 +123,7 @@ const useNotifications = () => {
           completed: sortedCompleted,
           inProgress: sortedInProgress,
           pending: sortedPending,
-          all: sortedAllRelevant, 
+          all: sortedAllRelevant,
         });
 
         setNotificationCounts({
@@ -174,11 +171,17 @@ const useNotifications = () => {
 
   useEffect(() => {
     fetchNotifications();
-    const intervalId = setInterval(fetchNotifications, 5 * 60 * 1000); 
+    const intervalId = setInterval(fetchNotifications, 5 * 60 * 1000);
     return () => clearInterval(intervalId);
   }, [fetchNotifications]);
 
-  return { loading, notifications, notificationCounts, error, fetchNotifications };
+  return {
+    loading,
+    notifications,
+    notificationCounts,
+    error,
+    fetchNotifications,
+  };
 };
 
 export default useNotifications;

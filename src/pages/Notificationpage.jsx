@@ -11,10 +11,10 @@ import ListItemText from "@mui/material/ListItemText";
 import Divider from "@mui/material/Divider";
 import Button from "@mui/material/Button";
 import Stack from "@mui/material/Stack";
-import Chip from "@mui/material/Chip"; 
+import Chip from "@mui/material/Chip";
 import { formatDistanceToNow, parseISO } from "date-fns";
 
-import useNotifications from "./../hooks/useNotifications"; 
+import useNotifications from "./../hooks/useNotifications";
 
 export default function NotificationsPage() {
   const { loading, notifications, notificationCounts, error } =
@@ -183,7 +183,8 @@ export default function NotificationsPage() {
               },
             }}
           >
-            All <Chip label={notificationCounts.all} size="small" sx={{ ml: 1 }} />
+            All{" "}
+            <Chip label={notificationCounts.all} size="small" sx={{ ml: 1 }} />
           </Button>
           <Button
             variant={selectedFilter === "pastDue" ? "contained" : "outlined"}
@@ -215,15 +216,17 @@ export default function NotificationsPage() {
               color: selectedFilter === "today" ? "white" : "warning.main",
               "&:hover": {
                 backgroundColor:
-                  selectedFilter === "today"
-                    ? "warning.dark"
-                    : "warning.light",
+                  selectedFilter === "today" ? "warning.dark" : "warning.light",
                 color: selectedFilter === "today" ? "white" : "warning.dark",
               },
             }}
           >
             Today{" "}
-            <Chip label={notificationCounts.today} size="small" sx={{ ml: 1 }} />
+            <Chip
+              label={notificationCounts.today}
+              size="small"
+              sx={{ ml: 1 }}
+            />
           </Button>
           <Button
             variant={selectedFilter === "thisWeek" ? "contained" : "outlined"}
@@ -269,7 +272,6 @@ export default function NotificationsPage() {
               sx={{ ml: 1 }}
             />
           </Button>
-          
         </Stack>
 
         {loading ? (

@@ -32,7 +32,6 @@ import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
 import CommentIcon from "@mui/icons-material/Comment";
 import { visuallyHidden } from "@mui/utils";
-import axios from "axios";
 import FormControl from "@mui/material/FormControl";
 import InputLabel from "@mui/material/InputLabel";
 import Select from "@mui/material/Select";
@@ -43,6 +42,7 @@ import Divider from "@mui/material/Divider";
 import TaskCommentsModal from "../modals/TaskCommentsModal";
 import CreateTaskModal from "../modals/CreateTaskModal";
 import ConfirmationDialog from "../modals/ConfirmationDialog";
+import useTasksApi from "../hooks/useTasksApi";
 
 const headCells = [
   {
@@ -268,269 +268,18 @@ EnhancedTableToolbar.propTypes = {
   onPriorityFilterChange: PropTypes.func.isRequired,
 };
 
-//   const [comments, setComments] = React.useState([]);
-//   const [newCommentText, setNewCommentText] = React.useState("");
-//   const [loadingComments, setLoadingComments] = React.useState(false);
-//   const [submittingComment, setSubmittingComment] = React.useState(false);
-//   const [deletingCommentId, setDeletingCommentId] = React.useState(null);
-
-//   const fetchComments = React.useCallback(async () => {
-//     if (!taskId) return;
-//     setLoadingComments(true);
-//     try {
-//       const token = localStorage.getItem("authtoken");
-//       const response = await axios.get(
-//         `http://localhost:5000/taskcomments/${taskId}`,
-//         {
-//           headers: {
-//             Authorization: `Bearer ${token}`,
-//           },
-//         }
-//       );
-//       console.log(response);
-//       if (response.status === 200) {
-//         setComments(Array.isArray(response.data) ? response.data : []);
-//       } else {
-//         throw new Error("Failed to fetch comments");
-//       }
-//     } catch (error) {
-//       console.error("Error fetching comments:", error);
-//       showSnackbar("Failed to fetch comments", "error");
-//       setComments([]);
-//     } finally {
-//       setLoadingComments(false);
-//     }
-//   }, [taskId, showSnackbar]);
-
-//   React.useEffect(() => {
-//     if (open) {
-//       fetchComments();
-//     } else {
-
-//       setComments([]);
-//       setNewCommentText("");
-//     }
-//   }, [open, fetchComments]);
-
-//   const handleSubmitComment = async () => {
-//     if (!newCommentText.trim()) {
-//       showSnackbar("Comment cannot be empty", "warning");
-//       return;
-//     }
-//     setSubmittingComment(true);
-//     console.log(newCommentText);
-//     try {
-//       const token = localStorage.getItem("authtoken");
-//       const response = await axios.post(
-//         `http://localhost:5000/taskcomments/${taskId}`,
-//         { comments: newCommentText },
-//         {
-//           headers: {
-//             "Content-Type": "application/json",
-//             Authorization: `Bearer ${token}`,
-//           },
-//         }
-//       );
-//       console.log(response);
-//       if (response.status === 200 || response.status === 201) {
-//         showSnackbar("Comment added successfully!");
-//         setNewCommentText("");
-//         fetchComments();
-//       } else {
-//         throw new Error(response.data?.message || "Failed to add comment");
-//       }
-//     } catch (error) {
-//       console.error("Error adding comment:", error);
-//       showSnackbar(
-//         error.response?.data?.message ||
-//           error.message ||
-//           "Failed to add comment",
-//         "error"
-//       );
-//     } finally {
-//       setSubmittingComment(false);
-//     }
-//   };
-
-//   const handleDeleteComment = async (commentId) => {
-//     if (!commentId) return;
-
-//     setDeletingCommentId(commentId);
-//     try {
-//       const token = localStorage.getItem("authtoken");
-//       const response = await axios.delete(
-//         `http://localhost:5000/taskcomments/${commentId}`,
-//         {
-//           headers: {
-//             Authorization: `Bearer ${token}`,
-//           },
-//         }
-//       );
-
-//       if (response.status === 200 || response.status === 204) {
-//         showSnackbar("Comment deleted successfully!");
-//         fetchComments(); // Refresh comments list
-//       } else {
-//         throw new Error(response.data?.message || "Failed to delete comment");
-//       }
-//     } catch (error) {
-//       console.error("Error deleting comment:", error);
-//       showSnackbar(
-//         error.response?.data?.message ||
-//           error.message ||
-//           "Failed to delete comment",
-//         "error"
-//       );
-//     } finally {
-//       setDeletingCommentId(null);
-//     }
-//   };
-
-//   const formatDate = (dateString) => {
-//     if (!dateString) return "";
-//     try {
-//       return new Date(dateString).toLocaleString("en-GB", {
-//         day: "2-digit",
-//         month: "long",
-//         year: "numeric",
-//         hour: "2-digit",
-//         minute: "2-digit",
-//       });
-//     } catch {
-//       return dateString;
-//     }
-//   };
-
-//   return (
-//     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-//       <DialogTitle>Comments for Task </DialogTitle>
-//       <DialogContent dividers>
-//         {loadingComments ? (
-//           <Box sx={{ display: "flex", justifyContent: "center", py: 2 }}>
-//             <CircularProgress />
-//           </Box>
-//         ) : comments.length === 0 ? (
-//           <Typography variant="body2" color="textSecondary" sx={{ py: 2 }}>
-//             No comments yet. Be the first to add one!
-//           </Typography>
-//         ) : (
-//           <List>
-//             {comments.map((comment, index) => (
-//               <React.Fragment key={comment.id || index}>
-//                 <ListItem
-//                   alignItems="flex-start"
-//                   sx={{
-//                     display: "flex",
-//                     justifyContent: "space-between",
-//                     alignItems: "flex-start",
-//                   }}
-//                 >
-//                   <ListItemText
-//                     // primary={
-//                     //   <Typography
-//                     //     sx={{ display: "inline" }}
-//                     //     component="span"
-//                     //     variant="body2"
-//                     //     color="text.primary"
-//                     //   >
-//                     //     {comment.user  ? comment.user.username : "Anonymous"}
-//                     //   </Typography>
-//                     // }
-//                     secondary={
-//                       <React.Fragment>
-//                         <Typography
-//                           sx={{ display: "block" }}
-//                           component="span"
-//                           variant="body2"
-//                           color="text.secondary"
-//                         >
-//                           {comment.comments}
-//                         </Typography>
-//                         <Typography
-//                           sx={{ display: "block" }}
-//                           component="span"
-//                           variant="caption"
-//                           color="text.disabled"
-//                         >
-//                           {formatDate(comment.createdAt)}
-//                         </Typography>
-//                       </React.Fragment>
-//                     }
-//                   />
-//                   <IconButton
-//                     edge="end"
-//                     aria-label="delete comment"
-//                     onClick={() => handleDeleteComment(comment.id)}
-//                     disabled={deletingCommentId === comment.id}
-//                     sx={{
-//                       ml: 1,
-//                       color: "error.main",
-//                       "&:hover": {
-//                         backgroundColor: "error.light",
-//                         color: "error.contrastText",
-//                       },
-//                     }}
-//                   >
-//                     {deletingCommentId === comment.id ? (
-//                       <CircularProgress size={20} />
-//                     ) : (
-//                       <DeleteIcon />
-//                     )}
-//                   </IconButton>
-//                 </ListItem>
-//                 {index < comments.length - 1 && <Divider component="li" />}
-//               </React.Fragment>
-//             ))}
-//           </List>
-//         )}
-//         <Box sx={{ mt: 3, display: "flex", alignItems: "center", gap: 2 }}>
-//           <TextField
-//             fullWidth
-//             label="Add a new comment"
-//             multiline
-//             rows={2}
-//             value={newCommentText}
-//             onChange={(e) => setNewCommentText(e.target.value)}
-//             disabled={submittingComment}
-//           />
-//           <Button
-//             variant="contained"
-//             onClick={handleSubmitComment}
-//             disabled={submittingComment}
-//             sx={{ flexShrink: 0, height: "fit-content" }}
-//           >
-//             {submittingComment ? <CircularProgress size={24} /> : "Post"}
-//           </Button>
-//         </Box>
-//       </DialogContent>
-//       <DialogActions>
-//         <Button onClick={onClose}>Close</Button>
-//       </DialogActions>
-//     </Dialog>
-//   );
-// }
-
-// TaskCommentsModal.propTypes = {
-//   open: PropTypes.bool.isRequired,
-//   onClose: PropTypes.func.isRequired,
-//   taskId: PropTypes.string,
-//   showSnackbar: PropTypes.func.isRequired,
-// };
-
 export default function EnhancedTable() {
   const [order, setOrder] = React.useState("asc");
   const [orderBy, setOrderBy] = React.useState("title");
   const [selected, setSelected] = React.useState([]);
   const [page, setPage] = React.useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(5);
-  const [rows, setRows] = React.useState([]);
-  const [loading, setLoading] = React.useState(false);
+
   const [modalOpen, setModalOpen] = React.useState(false);
   const [edit, setEdit] = React.useState(false);
   const [editTaskId, setEditTaskId] = React.useState(null);
   const [editTaskData, setEditTaskData] = React.useState(null);
-  const [createLoading, setCreateLoading] = React.useState(false);
-  const [deleteLoading, setDeleteLoading] = React.useState(false);
+
   const [snackbar, setSnackbar] = React.useState({
     open: false,
     message: "",
@@ -555,149 +304,36 @@ export default function EnhancedTable() {
     setSnackbar((prev) => ({ ...prev, open: false }));
   };
 
-  const fetchTasks = React.useCallback(async () => {
-    setLoading(true);
-    try {
-      const token = localStorage.getItem("authtoken");
-      const response = await axios.get("http://localhost:5000/task", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+  const {
+    tasks,
+    loading,
+    createLoading,
+    deleteLoading,
+    fetchTasks,
+    createTask,
+    updateTask,
+    deleteTasks,
+  } = useTasksApi();
 
-      if (response.status === 200) {
-        setRows(Array.isArray(response.data) ? response.data : []);
-      } else {
-        throw new Error("Failed to fetch tasks");
-      }
-    } catch (error) {
-      console.error("Error fetching tasks:", error);
-      showSnackbar("Failed to fetch tasks", "error");
-      setRows([]);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
+  // Sync tasks from API to local state
   React.useEffect(() => {
     fetchTasks();
   }, [fetchTasks]);
 
-  const handleCreateTask = async (taskData) => {
-    setCreateLoading(true);
-    try {
-      const token = localStorage.getItem("authtoken");
-
-      const response = await axios.post(
-        "http://localhost:5000/task",
-        taskData,
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      if (response.status === 200 || response.status === 201) {
-        showSnackbar("Task created successfully!");
-        setModalOpen(false);
-        fetchTasks();
-      } else {
-        throw new Error(response.data?.message || "Failed to create task");
-      }
-    } catch (error) {
-      console.error("Error creating task:", error);
-      showSnackbar(
-        error.response?.data?.message ||
-          error.message ||
-          "Failed to create task",
-        "error"
-      );
-    } finally {
-      setCreateLoading(false);
-    }
-  };
-
-  const handleEditTask = async (taskData) => {
-    if (!editTaskId) return;
-    setCreateLoading(true);
-    try {
-      const token = localStorage.getItem("authtoken");
-      const response = await axios.put(
-        `http://localhost:5000/task/${editTaskId}`,
-        taskData,
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      if (response.status === 200) {
-        showSnackbar("Task updated successfully!");
-        setModalOpen(false);
-        setEdit(false);
-        setEditTaskId(null);
-        setEditTaskData(null);
-        fetchTasks();
-      } else {
-        throw new Error(response.data?.message || "Failed to update task");
-      }
-    } catch (error) {
-      console.error("Error updating task:", error);
-      showSnackbar(
-        error.response?.data?.message ||
-          error.message ||
-          "Failed to update task",
-        "error"
-      );
-    } finally {
-      setCreateLoading(false);
-    }
-  };
-
+  // Handle delete with proper confirmation
   const handleDeleteSelected = async () => {
     if (selected.length === 0) return;
-
     setConfirmDialogOpen(true);
   };
 
-  const confirmDelete = async () => {
-    setDeleteLoading(true);
+  const handleConfirmDelete = async () => {
     try {
-      const token = localStorage.getItem("authtoken");
-      const deletePromises = selected.map((id) =>
-        axios.delete(`http://localhost:5000/task/${id}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        })
-      );
-
-      const responses = await Promise.allSettled(deletePromises);
-      const failedDeletes = responses.filter(
-        (res) => res.status === "rejected"
-      );
-
-      if (failedDeletes.length === 0) {
-        showSnackbar(`${selected.length} task(s) deleted successfully!`);
-        setSelected([]);
-        fetchTasks();
-      } else {
-        throw new Error(`Failed to delete ${failedDeletes.length} task(s)`);
-      }
-    } catch (error) {
-      console.error("Error deleting tasks:", error);
-      showSnackbar(
-        error.response?.data?.message ||
-          error.message ||
-          "Failed to delete tasks",
-        "error"
-      );
-    } finally {
-      setDeleteLoading(false);
+      await deleteTasks(selected);
+      setSelected([]);
       setConfirmDialogOpen(false);
+      showSnackbar(`${selected.length} task(s) deleted successfully`);
+    } catch (error) {
+      showSnackbar("Failed to delete tasks", error);
     }
   };
 
@@ -709,7 +345,7 @@ export default function EnhancedTable() {
 
   const handleSelectAllClick = (event) => {
     if (event.target.checked) {
-      const newSelected = rows.map((n) => n.id);
+      const newSelected = filteredRows.map((n) => n.id);
       setSelected(newSelected);
       return;
     }
@@ -786,22 +422,24 @@ export default function EnhancedTable() {
 
   const handlePriorityFilterChange = (event) => {
     setPriorityFilter(event.target.value);
-    setPage(0); // Reset page when filter changes
+    setPage(0);
   };
 
+  // Filter tasks based on priority
   const filteredRows = React.useMemo(() => {
+    const tasksArray = Array.isArray(tasks) ? tasks : [];
     if (priorityFilter === "All") {
-      return rows;
+      return tasksArray;
     }
-    return rows.filter((row) => row.priority === priorityFilter);
-  }, [rows, priorityFilter]);
+    return tasksArray.filter((row) => row.priority === priorityFilter);
+  }, [tasks, priorityFilter]);
 
   const emptyRows =
     page > 0 ? Math.max(0, (1 + page) * rowsPerPage - filteredRows.length) : 0;
 
   const visibleRows = React.useMemo(
     () =>
-      [...(Array.isArray(filteredRows) ? filteredRows : [])]
+      [...filteredRows]
         .sort(getComparator(order, orderBy))
         .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage),
     [filteredRows, order, orderBy, page, rowsPerPage]
@@ -821,7 +459,21 @@ export default function EnhancedTable() {
     setEditTaskData(null);
   };
 
-  // Handlers for comments modal
+  const handleTaskSubmit = async (taskData) => {
+    try {
+      if (edit) {
+        await updateTask(editTaskId, taskData);
+        showSnackbar("Task updated successfully");
+      } else {
+        await createTask(taskData);
+        showSnackbar("Task created successfully");
+      }
+      handleModalClose();
+    } catch (error) {
+      showSnackbar(`Failed to ${edit ? "update" : "create"} task`, error);
+    }
+  };
+
   const handleOpenCommentsModal = (taskId) => {
     setCurrentTaskIdForComments(taskId);
     setCommentsModalOpen(true);
@@ -936,7 +588,7 @@ export default function EnhancedTable() {
                             display: "inline-block",
                           }}
                         >
-                          {row.status.replace("_", " ")}
+                          {row.status?.replace("_", " ") || "Unknown"}
                         </Box>
                       </TableCell>
                       <TableCell align="left">
@@ -953,7 +605,7 @@ export default function EnhancedTable() {
                             display: "inline-block",
                           }}
                         >
-                          {row.priority}
+                          {row.priority || "Unknown"}
                         </Box>
                       </TableCell>
                       <TableCell align="left">
@@ -1010,7 +662,7 @@ export default function EnhancedTable() {
       <CreateTaskModal
         open={modalOpen}
         onClose={handleModalClose}
-        onSubmit={edit ? handleEditTask : handleCreateTask}
+        onSubmit={handleTaskSubmit}
         loading={createLoading}
         edit={edit}
         initialData={editTaskData}
@@ -1020,7 +672,7 @@ export default function EnhancedTable() {
         open={confirmDialogOpen}
         title="Confirm Deletion"
         message={`Are you sure you want to delete ${selected.length} selected task(s)? This action cannot be undone.`}
-        onConfirm={confirmDelete}
+        onConfirm={handleConfirmDelete}
         onCancel={() => setConfirmDialogOpen(false)}
         loading={deleteLoading}
       />
