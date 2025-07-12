@@ -8,8 +8,10 @@ import {
   Alert,
   Button,
   Stack,
+  Chip,
+  Card,
+  CardContent,
 } from "@mui/material";
-
 
 import {
   PieChart,
@@ -18,18 +20,14 @@ import {
   ChartsLegend,
   axisClasses,
 } from "@mui/x-charts";
-
 import useDashboardAnalytics from "../hooks/useDashboard";
 
 const AnalyticsCard = ({ title, value, onClick, sx = {} }) => (
-  <Grid item xs={12} sm={6} md={3} sx={{
-    mb:2,
-  }}>
+  <Grid item xs={12} sm={6} md={3} sx={{ mb: 2 }}>
     <Paper
       elevation={3}
       sx={{
         p: 2,
-        
         borderRadius: 2,
         textAlign: "center",
         cursor: onClick ? "pointer" : "default",
@@ -59,6 +57,15 @@ const AnalyticsCard = ({ title, value, onClick, sx = {} }) => (
   </Grid>
 );
 
+const taskStatusColors = [
+  "#4CAF50",
+  "#2196F3",
+  "#FFC107",
+  "#F44336",
+  "#9E9E9E",
+];
+const taskPriorityColors = ["#F44336", "#FF9800", "#2196F3"];
+
 function DashboardPage() {
   const {
     taskAnalytics,
@@ -68,8 +75,8 @@ function DashboardPage() {
     errorTaskAnalytics,
     errorUserAnalytics,
   } = useDashboardAnalytics();
-  const total = userAnalytics?.admin + userAnalytics?.users;
 
+  const total = userAnalytics?.admin + userAnalytics?.users;
   const [selectedChartType, setSelectedChartType] = React.useState(null);
 
   const isLoading = loadingTaskAnalytics || loadingUserAnalytics;
@@ -101,24 +108,33 @@ function DashboardPage() {
 
   const userBarChartData = React.useMemo(() => {
     if (!userAnalytics) return { series: [], xAxisLabels: [] };
-    const data = [
-      { id: "active", value: userAnalytics.usersactive, label: "Active Users" },
-      {
-        id: "inactive",
-        value: userAnalytics.usersinactive,
-        label: "Inactive Users",
-      },
-      { id: "admin", value: userAnalytics.admin, label: "Admins" },
+    const categories = ["Users", "Admins"];
+    const activeData = [userAnalytics.usersactive, userAnalytics.adminactive];
+    const inactiveData = [
+      userAnalytics.usersinactive,
+      userAnalytics.admininactive,
     ];
+    const totalData = [userAnalytics.users, userAnalytics.admin];
 
     return {
       series: [
         {
-          data: data.map((d) => d.value),
-          label: "User Counts",
+          data: activeData,
+          label: "Active",
+          color: "#4CAF50",
+        },
+        {
+          data: inactiveData,
+          label: "Inactive",
+          color: "#F44336",
+        },
+        {
+          data: totalData,
+          label: "Total",
+          color: "#2196F3",
         },
       ],
-      xAxisLabels: data.map((d) => d.label),
+      xAxisLabels: categories,
     };
   }, [userAnalytics]);
 
@@ -158,16 +174,6 @@ function DashboardPage() {
           <Typography variant="body2">
             Please check your server connection or try refreshing.
           </Typography>
-          {errorTaskAnalytics && (
-            <Typography variant="caption" display="block">
-              Task Analytics Error: {errorTaskAnalytics.message}
-            </Typography>
-          )}
-          {errorUserAnalytics && (
-            <Typography variant="caption" display="block">
-              User Analytics Error: {userAnalytics.message}
-            </Typography>
-          )}
         </Alert>
       )}
 
@@ -175,7 +181,7 @@ function DashboardPage() {
         <>
           <Grid container spacing={{ xs: 2, md: 3 }} mb={4}>
             <AnalyticsCard
-              title="Total  Tasks"
+              title="Total Tasks"
               value={taskAnalytics?.totalActiveTasks ?? "-"}
               onClick={() => setSelectedChartType("taskStatus")}
             />
@@ -184,7 +190,6 @@ function DashboardPage() {
               value={taskAnalytics?.totalActiveTasks ?? "-"}
               onClick={() => setSelectedChartType("taskPriority")}
             />
-
             <AnalyticsCard
               title="Total Users"
               value={total ?? "-"}
@@ -202,7 +207,6 @@ function DashboardPage() {
                 position: "relative",
               }}
             >
-             
               <Typography
                 variant="h5"
                 component="h2"
@@ -212,10 +216,10 @@ function DashboardPage() {
                 {selectedChartType === "taskStatus" && "Task Status Breakdown"}
                 {selectedChartType === "taskPriority" &&
                   "Task Priority Breakdown"}
-                {selectedChartType === "userSummary" && "User Role Summary"}
+                {selectedChartType === "userSummary" && "User & Admin Summary"}
               </Typography>
 
-              <Box sx={{ height: 350, width: "100%" }}>
+              <Box sx={{ height: 400, width: "100%" }}>
                 {selectedChartType === "taskStatus" &&
                   statusPieData.length > 0 && (
                     <PieChart
@@ -226,6 +230,7 @@ function DashboardPage() {
                           outerRadius: 120,
                         },
                       ]}
+                      colors={taskStatusColors}
                       tooltip={{ trigger: "item" }}
                       legend={{
                         hidden: false,
@@ -247,6 +252,7 @@ function DashboardPage() {
                           outerRadius: 120,
                         },
                       ]}
+                      colors={taskPriorityColors}
                       tooltip={{ trigger: "item" }}
                       legend={{
                         hidden: false,
@@ -267,32 +273,28 @@ function DashboardPage() {
                           data: userBarChartData.xAxisLabels,
                         },
                       ]}
-                      series={[{ data: userBarChartData.series[0].data }]}
-                      margin={{ top: 40, right: 30, left: 40, bottom: 40 }}
+                      series={userBarChartData.series}
+                      margin={{ top: 40, right: 30, left: 60, bottom: 80 }}
                       sx={{
                         [`.${axisClasses.left} .${axisClasses.label}`]: {
-                          transform: "translate(-10px, 0)",
+                          transform: "translate(-20px, 0)",
+                        },
+                        [`.${axisClasses.bottom} .${axisClasses.label}`]: {
+                          transform: "translate(0, 10px)",
+                        },
+                      }}
+                      slotProps={{
+                        legend: {
+                          direction: "row",
+                          position: { vertical: "top", horizontal: "middle" },
+                          padding: 0,
                         },
                       }}
                     >
                       <ChartsTooltip />
+                      <ChartsLegend />
                     </BarChart>
                   )}
-
-                {((selectedChartType === "taskStatus" &&
-                  statusPieData.length === 0) ||
-                  (selectedChartType === "taskPriority" &&
-                    priorityPieData.length === 0) ||
-                  (selectedChartType === "userSummary" &&
-                    userBarChartData.series[0].data.length === 0)) && (
-                  <Typography
-                    variant="body1"
-                    color="text.secondary"
-                    sx={{ textAlign: "center", mt: 5 }}
-                  >
-                    No data to display for this chart.
-                  </Typography>
-                )}
               </Box>
             </Paper>
           )}

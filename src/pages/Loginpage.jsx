@@ -19,11 +19,15 @@ import axios from "axios";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
+import { signInWithPopup } from "firebase/auth";
+import { auth, googleProvider } from "../firebaseConfig";
+
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setemail] = useState("");
   const [password, setpassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [isAdminLogin, setIsAdminLogin] = useState(false);
 
   const handleSubmit = async (e) => {
@@ -55,6 +59,48 @@ export default function LoginPage() {
       );
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    setGoogleLoading(true);
+    try {
+      const result = await signInWithPopup(auth, googleProvider);
+      const user = result.user;
+
+      const idToken = await user.getIdToken();
+
+      const backendResponse = await axios.post(
+        "http://localhost:5000/user/google-login",
+        {
+          idToken,
+        }
+      );
+
+      toast.success(
+        "Google login successful! Welcome, " + backendResponse.data.user.name
+      );
+      localStorage.setItem("authtoken", backendResponse.data.token);
+      localStorage.setItem(
+        "userdata",
+        JSON.stringify(backendResponse.data.user)
+      );
+      window.location.href = "/";
+    } catch (error) {
+      console.error("Google login error:", error);
+      let errorMessage = "Google login failed. Please try again.";
+      if (error.code === "auth/popup-closed-by-user") {
+        errorMessage = "Google login popup closed.";
+      } else if (
+        error.response &&
+        error.response.data &&
+        error.response.data.message
+      ) {
+        errorMessage = error.response.data.message;
+      }
+      toast.error(errorMessage);
+    } finally {
+      setGoogleLoading(false);
     }
   };
 
@@ -257,7 +303,7 @@ export default function LoginPage() {
                 textDecoration: "none",
                 "&:hover": {
                   textDecoration: "underline",
-                  color: "#3b82f6", 
+                  color: "#3b82f6",
                 },
               }}
               className="forgot link"
@@ -272,7 +318,7 @@ export default function LoginPage() {
             size="large"
             sx={{
               mt: 2,
-              mb: 3,
+              mb: 1, // Reduced margin to add Google button below
               padding: "0.75rem",
               backgroundColor: "#111827",
               color: "#fff",
@@ -287,13 +333,45 @@ export default function LoginPage() {
               },
             }}
             onClick={handleSubmit}
-            disabled={loading}
+            disabled={loading || googleLoading} // Disable if either is loading
             className="btn"
           >
             {loading ? (
               <CircularProgress size={24} color="inherit" />
             ) : (
               "Sign In"
+            )}
+          </Button>
+
+          {/* Google Login Button */}
+          <Button
+            fullWidth
+            variant="outlined" // Use outlined variant for Google button
+            size="large"
+            sx={{
+              mt: 1, // Margin top to separate from regular sign-in button
+              padding: "0.75rem",
+              borderColor: "#d1d5db", // Border color for outlined button
+              color: "#4b5563", // Text color
+              fontSize: "1rem",
+              fontWeight: 500,
+              borderRadius: "0.375rem",
+              cursor: "pointer",
+              transition: "background-color 0.2s ease, border-color 0.2s ease",
+              "&:hover": {
+                backgroundColor: "#f3f4f6", // Light background on hover
+                borderColor: "#9ca3af", // Darker border on hover
+              },
+            }}
+            onClick={handleGoogleLogin}
+            disabled={loading || googleLoading} // Disable if either is loading
+            startIcon={googleLoading ? null : <GoogleIcon />} // Show icon only when not loading
+            className="btn-google"
+          >
+            {googleLoading ? (
+              <CircularProgress size={24} color="inherit" />
+            ) : (
+              "Sign In with Google"
             )}
           </Button>
 
