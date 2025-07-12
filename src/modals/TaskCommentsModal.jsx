@@ -42,7 +42,7 @@ function TaskCommentsModal({ open, onClose, taskId, showSnackbar }) {
           },
         }
       );
-
+console.log(response);
       if (response.status === 200) {
         setComments(Array.isArray(response.data) ? response.data : []);
       } else {
@@ -119,7 +119,7 @@ function TaskCommentsModal({ open, onClose, taskId, showSnackbar }) {
           },
         }
       );
-
+console.log(response);
       if (response.status === 200 || response.status === 204) {
         showSnackbar("Comment deleted successfully!");
         fetchComments();
@@ -184,16 +184,7 @@ function TaskCommentsModal({ open, onClose, taskId, showSnackbar }) {
                   }}
                 >
                   <ListItemText
-                    primary={
-                      <Typography
-                        sx={{ display: "block", fontWeight: "bold" }}
-                        component="span"
-                        variant="body2"
-                        color="text.primary"
-                      >
-                        {comment.user ? comment.user.username : "Anonymous"}
-                      </Typography>
-                    }
+                 
                     secondary={
                       <React.Fragment>
                         <Typography
@@ -202,7 +193,7 @@ function TaskCommentsModal({ open, onClose, taskId, showSnackbar }) {
                           variant="body2"
                           color="text.secondary"
                         >
-                          {comment.comment}{" "}
+                          {comment.comments}{" "}
                           {/* Assuming comment text is 'comment' field */}
                         </Typography>
                         <Typography
