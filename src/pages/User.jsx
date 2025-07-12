@@ -5,7 +5,7 @@ import { Add as AddIcon } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import UserModal from "../modals/UserModal";
 import ActionMenu from "../components/ActionMenu";
-import  useUserData  from "../hooks/useUserdata";
+import  {useUserData}  from "../hooks/useUserdata";
 
 export default function UserTable() {
   const navigate = useNavigate();
