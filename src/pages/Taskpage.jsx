@@ -43,6 +43,8 @@ import TaskCommentsModal from "../modals/TaskCommentsModal";
 import CreateTaskModal from "../modals/CreateTaskModal";
 import ConfirmationDialog from "../modals/ConfirmationDialog";
 import useTasksApi from "../hooks/useTasksApi";
+import useCategoriesApi from "../hooks/useCategoriesApi"; 
+
 import Menu from "@mui/material/Menu";
 
 import MoreVertIcon from "@mui/icons-material/MoreVert";
@@ -60,12 +62,18 @@ const headCells = [
     disablePadding: false,
     label: "Description",
   },
-  {
-    id: "expiredDate",
-    numeric: false,
-    disablePadding: false,
-    label: "Expired Date",
-  },
+  // {
+  //   id: "category", 
+  //   numeric: false,
+  //   disablePadding: false,
+  //   label: "Category",
+  // },
+  // {
+  //   id: "subCategory", 
+  //   numeric: false,
+  //   disablePadding: false,
+  //   label: "SubCategory",
+  // },
   {
     id: "status",
     numeric: false,
@@ -111,12 +119,7 @@ function getComparator(order, orderBy) {
 }
 
 function EnhancedTableHead(props) {
-  const {
-    order,
-    orderBy,
-
-    onRequestSort,
-  } = props;
+  const { order, orderBy, onRequestSort } = props;
   const createSortHandler = (property) => (event) => {
     onRequestSort(event, property);
   };
@@ -167,8 +170,18 @@ EnhancedTableHead.propTypes = {
 };
 
 function EnhancedTableToolbar(props) {
-  const { numSelected, onCreateTask, priorityFilter, onPriorityFilterChange } =
-    props;
+  const {
+    numSelected,
+    onCreateTask,
+    priorityFilter,
+    onPriorityFilterChange,
+    categories, // NEW
+    selectedCategoryFilter, // NEW
+    onCategoryFilterChange, // NEW
+    subCategories, // NEW
+    selectedSubCategoryFilter, // NEW
+    onSubCategoryFilterChange, // NEW
+  } = props;
 
   return (
     <Toolbar
@@ -205,6 +218,46 @@ function EnhancedTableToolbar(props) {
           Tasks
         </Typography>
       )}
+
+      {/* Category Filter */}
+      <FormControl sx={{ m: 1, minWidth: 120 }} size="small">
+        <InputLabel id="category-filter-label">Category</InputLabel>
+        <Select
+          labelId="category-filter-label"
+          id="category-filter-select"
+          value={selectedCategoryFilter || "All"}
+          label="Category"
+          onChange={onCategoryFilterChange}
+        >
+          <MenuItem value="All">All Categories</MenuItem>
+          {categories.map((category) => (
+            <MenuItem key={category.id} value={category.id}>
+              {category.name}
+            </MenuItem>
+          ))}
+        </Select>
+      </FormControl>
+
+      {/* SubCategory Filter */}
+      <FormControl sx={{ m: 1, minWidth: 120 }} size="small" disabled={!selectedCategoryFilter || selectedCategoryFilter === "All"}>
+        <InputLabel id="sub-category-filter-label">SubCategory</InputLabel>
+        <Select
+          labelId="sub-category-filter-label"
+          id="sub-category-filter-select"
+          value={selectedSubCategoryFilter || "All"}
+          label="SubCategory"
+          onChange={onSubCategoryFilterChange}
+        >
+          <MenuItem value="All">All SubCategories</MenuItem>
+          {subCategories.map((subCategory) => (
+            <MenuItem key={subCategory.id} value={subCategory.id}>
+              {subCategory.name}
+            </MenuItem>
+          ))}
+        </Select>
+      </FormControl>
+
+      {/* Priority Filter */}
       <FormControl sx={{ m: 1, minWidth: 120 }} size="small">
         <InputLabel id="priority-filter-label">Priority</InputLabel>
         <Select
@@ -244,6 +297,12 @@ EnhancedTableToolbar.propTypes = {
   deleteLoading: PropTypes.bool.isRequired,
   priorityFilter: PropTypes.string.isRequired,
   onPriorityFilterChange: PropTypes.func.isRequired,
+  categories: PropTypes.array.isRequired, // NEW
+  selectedCategoryFilter: PropTypes.oneOfType([PropTypes.string, PropTypes.number]), // NEW
+  onCategoryFilterChange: PropTypes.func.isRequired, // NEW
+  subCategories: PropTypes.array.isRequired, // NEW
+  selectedSubCategoryFilter: PropTypes.oneOfType([PropTypes.string, PropTypes.number]), // NEW
+  onSubCategoryFilterChange: PropTypes.func.isRequired, // NEW
 };
 
 export default function EnhancedTable() {
@@ -267,6 +326,10 @@ export default function EnhancedTable() {
   });
   const [confirmDialogOpen, setConfirmDialogOpen] = React.useState(false);
   const [priorityFilter, setPriorityFilter] = React.useState("All");
+
+  
+  const [selectedCategoryFilter, setSelectedCategoryFilter] = React.useState("All");
+  const [selectedSubCategoryFilter, setSelectedSubCategoryFilter] = React.useState("All");
 
   const [commentsModalOpen, setCommentsModalOpen] = React.useState(false);
   const [currentTaskIdForComments, setCurrentTaskIdForComments] =
@@ -293,9 +356,21 @@ export default function EnhancedTable() {
     setSnackbar((prev) => ({ ...prev, open: false }));
   };
 
+  // NEW: Use new API hooks for categories and subcategories
+  const {
+    categories,
+    loading: categoriesLoading,
+    fetchCategories,
+    subCategories,
+    loading: subCategoriesLoading,
+    fetchSubCategories,
+  } = useCategoriesApi();
+ 
+console.log("category--->",categories)
+console.log("sub category--->",subCategories);
   const {
     tasks,
-    loading,
+    loading: tasksLoading,
     createLoading,
     deleteLoading,
     fetchTasks,
@@ -304,12 +379,41 @@ export default function EnhancedTable() {
     deleteTasks,
   } = useTasksApi();
 
-  // Sync tasks from API to local state
+  // Fetch initial data
   React.useEffect(() => {
-    fetchTasks();
-  }, [fetchTasks]);
+    fetchCategories();
+  }, [fetchCategories]);
 
-  // Handle delete with proper confirmation
+  // Fetch subcategories when selectedCategoryFilter changes
+  React.useEffect(() => {
+    if (selectedCategoryFilter && selectedCategoryFilter !== "All") {
+      fetchSubCategories(selectedCategoryFilter);
+    } else {
+      // Clear subcategories if no category is selected
+      fetchSubCategories(null); // Pass null or empty array to clear
+      setSelectedSubCategoryFilter("All"); // Reset subcategory filter
+    }
+  }, [selectedCategoryFilter, fetchSubCategories]);
+
+  // Fetch tasks when filters change
+  React.useEffect(() => {
+    const filters = {};
+    if (priorityFilter !== "All") {
+      filters.priority = priorityFilter;
+    }
+    if (selectedSubCategoryFilter !== "All") {
+      filters.sub_category_id = selectedSubCategoryFilter;
+    } else if (selectedCategoryFilter !== "All") {
+       //
+    }
+     if(selectedCategoryFilter!== "All"){
+filters.category_id=selectedCategoryFilter;
+    }
+    
+    console.log(filters);
+    fetchTasks(filters);
+  }, [fetchTasks, priorityFilter, selectedSubCategoryFilter]); 
+  
   const handleDeleteSelected = async () => {
     if (selected.length === 0) return;
     setConfirmDialogOpen(true);
@@ -369,18 +473,7 @@ export default function EnhancedTable() {
     setPage(0);
   };
 
-  const formatDate = (dateString) => {
-    if (!dateString) return "";
-    try {
-      return new Date(dateString).toLocaleDateString("en-GB", {
-        day: "2-digit",
-        month: "long",
-        year: "numeric",
-      });
-    } catch {
-      return dateString;
-    }
-  };
+ 
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -414,14 +507,43 @@ export default function EnhancedTable() {
     setPage(0);
   };
 
-  // Filter tasks based on priority
+  // NEW: Category filter handler
+  const handleCategoryFilterChange = (event) => {
+    const categoryId = event.target.value;
+    console.log(categoryId);
+    setSelectedCategoryFilter(categoryId);
+    setSelectedSubCategoryFilter("All"); 
+    setPage(0);
+  };
+
+
+  const handleSubCategoryFilterChange = (event) => {
+    setSelectedSubCategoryFilter(event.target.value);
+    setPage(0);
+  };
+
+  
   const filteredRows = React.useMemo(() => {
     const tasksArray = Array.isArray(tasks) ? tasks : [];
-    if (priorityFilter === "All") {
-      return tasksArray;
+    let currentFilteredTasks = tasksArray;
+
+    
+    if (priorityFilter !== "All") {
+      currentFilteredTasks = currentFilteredTasks.filter((row) => row.priority === priorityFilter);
     }
-    return tasksArray.filter((row) => row.priority === priorityFilter);
-  }, [tasks, priorityFilter]);
+
+    
+    if (selectedCategoryFilter !== "All" && selectedSubCategoryFilter === "All") {
+        currentFilteredTasks = currentFilteredTasks.filter(task =>
+            task.subCategory && task.subCategory.category &&
+            task.subCategory.category.id === selectedCategoryFilter
+        );
+    }
+  
+
+    return currentFilteredTasks;
+  }, [tasks, priorityFilter, selectedCategoryFilter, selectedSubCategoryFilter]);
+
 
   const emptyRows =
     page > 0 ? Math.max(0, (1 + page) * rowsPerPage - filteredRows.length) : 0;
@@ -488,6 +610,12 @@ export default function EnhancedTable() {
           deleteLoading={deleteLoading}
           priorityFilter={priorityFilter}
           onPriorityFilterChange={handlePriorityFilterChange}
+          categories={categories} // NEW
+          selectedCategoryFilter={selectedCategoryFilter} // NEW
+          onCategoryFilterChange={handleCategoryFilterChange} // NEW
+          subCategories={(subCategories||[]).filter(sub => sub.category_id === selectedCategoryFilter || selectedCategoryFilter === "All")} // NEW: Filter subcategories for the toolbar dropdown
+          selectedSubCategoryFilter={selectedSubCategoryFilter} // NEW
+          onSubCategoryFilterChange={handleSubCategoryFilterChange} // NEW
         />
         <TableContainer>
           <Table
@@ -504,15 +632,15 @@ export default function EnhancedTable() {
               rowCount={filteredRows.length}
             />
             <TableBody>
-              {loading ? (
+              {tasksLoading || categoriesLoading || subCategoriesLoading ? (
                 <TableRow>
-                  <TableCell colSpan={7} align="center">
+                  <TableCell colSpan={8} align="center">
                     <CircularProgress />
                   </TableCell>
                 </TableRow>
               ) : visibleRows.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} align="center">
+                  <TableCell colSpan={8} align="center">
                     No tasks found.
                   </TableCell>
                 </TableRow>
@@ -548,9 +676,20 @@ export default function EnhancedTable() {
                           {row.description}
                         </Typography>
                       </TableCell>
-                      <TableCell align="left">
-                        {formatDate(row.expiredDate || row.expried_date)}
+                  
+                      {/* <TableCell align="left">
+                        <Typography variant="body2" noWrap>
+                          {row.subCategory?.category?.name || "N/A"}
+                        </Typography>
                       </TableCell>
+                    
+                      <TableCell align="left">
+                        <Typography variant="body2" noWrap>
+                          {row.subCategory?.name || "N/A"}
+                        </Typography>
+                      </TableCell> */}
+
+        
                       <TableCell align="left">
                         <Box
                           sx={{
@@ -652,13 +791,13 @@ export default function EnhancedTable() {
                   );
                 })
               )}
-              {emptyRows > 0 && !loading && (
+              {emptyRows > 0 && !tasksLoading && (
                 <TableRow
                   style={{
                     height: 53 * emptyRows,
                   }}
                 >
-                  <TableCell colSpan={7} />
+                  <TableCell colSpan={8} />
                 </TableRow>
               )}
             </TableBody>

@@ -36,7 +36,7 @@ export default function LoginPage() {
     if (!email || !password) {
       toast.error("Please enter both email and password");
       return;
-    }
+    } 
 
     setLoading(true);
     try {

@@ -1,4 +1,3 @@
-// src/modals/CreateTaskModal.js
 import React from "react";
 import PropTypes from "prop-types";
 import {
@@ -11,10 +10,10 @@ import {
   MenuItem,
   Grid,
   CircularProgress,
-  Stack, // Added Stack for better title alignment
-  IconButton, // Added IconButton for close button
+  Stack, 
+  IconButton, 
 } from "@mui/material";
-import CloseIcon from "@mui/icons-material/Close"; // Added CloseIcon
+import CloseIcon from "@mui/icons-material/Close"; 
 
 const statusOptions = [
   { value: "pending", label: "Pending" },
@@ -23,7 +22,7 @@ const statusOptions = [
 ];
 
 const priorityOptions = [
-  // Exclude "All" from Create/Edit modal
+  
   { value: "Low", label: "Low" },
   { value: "Medium", label: "Medium" },
   { value: "High", label: "High" },
@@ -71,6 +70,7 @@ function CreateTaskModal({
     }
     setErrors({});
   }, [open, edit, initialData]);
+  
 
   const handleChange = (field) => (event) => {
     setFormData((prev) => ({
@@ -200,6 +200,25 @@ function CreateTaskModal({
               margin="dense"
             />
           </Grid>
+
+          <Grid item xs={12} sm={6}>
+            <TextField
+              fullWidth
+              label="Status"
+              select
+              value={formData.status}
+              onChange={handleChange("status")}
+              disabled={loading}
+              margin="dense"
+            >
+              {statusOptions.map((option) => (
+                <MenuItem key={option.value} value={option.value}>
+                  {option.label}
+                </MenuItem>
+              ))}
+            </TextField>
+          </Grid>
+
 
           <Grid item xs={12} sm={6}>
             <TextField

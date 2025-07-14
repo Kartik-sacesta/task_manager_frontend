@@ -12,6 +12,8 @@ import Taskuserid from "../pages/Taskuserid";
 import User from "../pages/User";
 import Task from "../pages/Taskpage";
 import NotificationsPage from "../pages/Notificationpage";
+import Categorypage from "../pages/Categorypage";
+
 
 function ProtectedLayout() {
   return (
@@ -33,6 +35,7 @@ export default function Protectedroutes() {
         <Route path="/user/:id" element={<Taskuserid />} />
         <Route path="/user" element={<User />} />
         <Route path="/task" element={<Task />} />
+        <Route path="/category" element={<Categorypage/>} />
         <Route path="/notification" element={<NotificationsPage />} />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Route>

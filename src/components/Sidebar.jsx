@@ -22,7 +22,7 @@ import {
   Logout as LogoutIcon,
   Notifications as NotificationsIcon,
 } from "@mui/icons-material";
-
+import CategoryIcon from '@mui/icons-material/Category';
 const SIDEBAR_WIDTH = 280;
 
 const Sidebar = () => {
@@ -41,6 +41,12 @@ const Sidebar = () => {
       path: "/user",
       label: "Users",
       icon: <PeopleIcon />,
+      roles: ["Admin"],
+    },
+     {
+      path: "/category",
+      label: "Category",
+      icon: <CategoryIcon />,
       roles: ["Admin"],
     },
     {
