@@ -343,7 +343,7 @@ export default function LoginPage() {
             )}
           </Button>
 
-          {/* Google Login Button */}
+      
           <Button
             fullWidth
             variant="outlined" // Use outlined variant for Google button
