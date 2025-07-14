@@ -21,7 +21,7 @@ const useUserTasks = (userId) => {
     try {
       const token = localStorage.getItem("authtoken");
       const response = await axios.get(
-        `http://localhost:5000/user/task/${userId}`,
+        `${import.meta.env.VITE_REACT_APP_BACKEND_URL}/user/task/${userId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -66,7 +66,7 @@ const useUserTasks = (userId) => {
     try {
       const token = localStorage.getItem("authtoken");
       const response = await axios.get(
-        `http://localhost:5000/task/analytics/${userId}`,
+        `${import.meta.env.VITE_REACT_APP_BACKEND_URL}/task/analytics/${userId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,

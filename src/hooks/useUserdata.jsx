@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 
-const API_BASE_URL = "http://localhost:5000";
+
 
 export const useUserData = () => {
   const [users, setUsers] = useState([]);
@@ -31,7 +31,7 @@ export const useUserData = () => {
     setLoading(true);
     try {
       const token = getAuthToken();
-      const response = await fetch(`${API_BASE_URL}/user`, {
+      const response = await fetch(`${import.meta.env.VITE_REACT_APP_BACKEND_URL}/user`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -56,7 +56,7 @@ export const useUserData = () => {
     setCreateLoading(true);
     try {
       const token = getAuthToken();
-      const response = await axios.post(`${API_BASE_URL}/user`, userData, {
+      const response = await axios.post(`${import.meta.env.VITE_REACT_APP_BACKEND_URL}/user`, userData, {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
@@ -91,7 +91,7 @@ export const useUserData = () => {
     try {
       const token = getAuthToken();
       const response = await axios.put(
-        `${API_BASE_URL}/user/${userId}`,
+        `${import.meta.env.VITE_REACT_APP_BACKEND_URL}/user/${userId}`,
         userData,
         {
           headers: {
@@ -127,7 +127,7 @@ export const useUserData = () => {
 
     try {
       const token = getAuthToken();
-      const response = await axios.delete(`${API_BASE_URL}/user/${userId}`, {
+      const response = await axios.delete(`${import.meta.env.VITE_REACT_APP_BACKEND_URL}/user/${userId}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },

@@ -35,7 +35,7 @@ function TaskCommentsModal({ open, onClose, taskId, showSnackbar }) {
     try {
       const token = localStorage.getItem("authtoken");
       const response = await axios.get(
-        `http://localhost:5000/taskcomments/${taskId}`,
+        `${import.meta.env.VITE_REACT_APP_BACKEND_URL}/taskcomments/${taskId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -75,7 +75,7 @@ console.log(response);
     try {
       const token = localStorage.getItem("authtoken");
       const response = await axios.post(
-        `http://localhost:5000/taskcomments/${taskId}`,
+        `${import.meta.env.VITE_REACT_APP_BACKEND_URL}/taskcomments/${taskId}`,
         { comments: newCommentText },
         {
           headers: {
@@ -112,7 +112,7 @@ console.log(response);
     try {
       const token = localStorage.getItem("authtoken");
       const response = await axios.delete(
-        `http://localhost:5000/taskcomments/${commentId}`,
+        `${import.meta.env.VITE_REACT_APP_BACKEND_URL}/taskcomments/${commentId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,

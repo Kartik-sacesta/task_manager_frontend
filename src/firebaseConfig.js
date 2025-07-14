@@ -15,4 +15,15 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const googleProvider = new GoogleAuthProvider();
 
+googleProvider.addScope("https://www.googleapis.com/auth/drive.file");
+
+googleProvider.addScope(
+  "https://www.googleapis.com/auth/photoslibrary.readonly"
+);
+
+googleProvider.setCustomParameters({
+  prompt: "consent",
+  access_type: "offline",
+});
+
 export { auth, googleProvider };

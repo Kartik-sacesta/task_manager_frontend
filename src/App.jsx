@@ -26,7 +26,7 @@ function App() {
     }
 
     try {
-      const res = await axios.post("http://localhost:5000/user/me", { token });
+      const res = await axios.post(`${import.meta.env.VITE_REACT_APP_BACKEND_URL}/user/me`, { token });
       const userdata = {
         role: res.data.roletitle,
         username: res.data.username,

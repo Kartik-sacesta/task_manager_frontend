@@ -22,7 +22,7 @@ const useTasks = (userId) => {
     setError(null);
     try {
       const token = localStorage.getItem("authtoken");
-      const response = await axios.get(`http://localhost:5000/task/`, {
+      const response = await axios.get(`${import.meta.env.VITE_REACT_APP_BACKEND_URL}/task/`, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",

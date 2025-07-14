@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 
-const API_BASE_URL = "http://localhost:5000/task";
+const API_BASE_URL = `${import.meta.env.VITE_REACT_APP_BACKEND_URL}/task`;
 
 const useTasksApi = (showSnackbar) => {
   const [tasks, setTasks] = useState([]);

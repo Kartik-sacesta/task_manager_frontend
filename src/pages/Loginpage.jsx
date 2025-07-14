@@ -41,8 +41,8 @@ export default function LoginPage() {
     setLoading(true);
     try {
       const endpoint = isAdminLogin
-        ? "http://localhost:5000/user/adminlogin"
-        : "http://localhost:5000/user/login";
+        ? `${import.meta.env.VITE_REACT_APP_BACKEND_URL}/user/adminlogin`
+        : `${import.meta.env.VITE_REACT_APP_BACKEND_URL}/user/login`;
 
       const res = await axios.post(endpoint, {
         email,
@@ -71,7 +71,7 @@ export default function LoginPage() {
       const idToken = await user.getIdToken();
 
       const backendResponse = await axios.post(
-        "http://localhost:5000/user/google-login",
+        `${import.meta.env.VITE_REACT_APP_BACKEND_URL}/user/google-login`,
         {
           idToken,
         }

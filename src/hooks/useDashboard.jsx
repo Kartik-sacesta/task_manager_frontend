@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 
-const TASK_ANALYTICS_API_URL = "http://localhost:5000/task/alltask/analytics";
-const USER_ANALYTICS_API_URL = "http://localhost:5000/user/alluser";
+const TASK_ANALYTICS_API_URL = `${import.meta.env.VITE_REACT_APP_BACKEND_URL}/task/alltask/analytics`;
+const USER_ANALYTICS_API_URL = `${import.meta.env.VITE_REACT_APP_BACKEND_URL}/user/alluser`;
 
 const useDashboard = () => {
   const [taskAnalytics, setTaskAnalytics] = useState(null);
