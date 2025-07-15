@@ -21,6 +21,7 @@ import {
   axisClasses,
 } from "@mui/x-charts";
 import useDashboardAnalytics from "../hooks/useDashboard";
+import DashboardSkeleton from "../skeleton/DashboardSkeleton ";
 
 const AnalyticsCard = ({ title, value, onClick, sx = {} }) => (
   <Grid item xs={12} sm={6} md={3} sx={{ mb: 2 }}>
@@ -152,20 +153,10 @@ function DashboardPage() {
         </Typography>
       </Stack>
 
-      {isLoading && (
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            height: "60vh",
-          }}
-        >
-          <CircularProgress size={60} thickness={4} />
-          <Typography variant="h6" sx={{ ml: 3, color: "text.secondary" }}>
-            Loading Analytics...
-          </Typography>
-        </Box>
+      {isLoading && (<>
+      
+        <DashboardSkeleton/>
+      </>
       )}
 
       {hasError && !isLoading && (

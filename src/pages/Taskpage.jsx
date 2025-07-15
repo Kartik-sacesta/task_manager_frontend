@@ -1,6 +1,5 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { alpha } from "@mui/material/styles";
 import Box from "@mui/material/Box";
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
@@ -10,45 +9,30 @@ import TableHead from "@mui/material/TableHead";
 import TablePagination from "@mui/material/TablePagination";
 import TableRow from "@mui/material/TableRow";
 import TableSortLabel from "@mui/material/TableSortLabel";
-import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
 import Paper from "@mui/material/Paper";
-import Checkbox from "@mui/material/Checkbox";
 import IconButton from "@mui/material/IconButton";
-import Tooltip from "@mui/material/Tooltip";
-import Button from "@mui/material/Button";
-import Dialog from "@mui/material/Dialog";
-import DialogTitle from "@mui/material/DialogTitle";
-import DialogContent from "@mui/material/DialogContent";
-import DialogActions from "@mui/material/DialogActions";
-import TextField from "@mui/material/TextField";
+
 import MenuItem from "@mui/material/MenuItem";
-import Grid from "@mui/material/Grid";
 import CircularProgress from "@mui/material/CircularProgress";
 import Snackbar from "@mui/material/Snackbar";
 import Alert from "@mui/material/Alert";
 import DeleteIcon from "@mui/icons-material/Delete";
-import AddIcon from "@mui/icons-material/Add";
+
 import EditIcon from "@mui/icons-material/Edit";
 import CommentIcon from "@mui/icons-material/Comment";
 import { visuallyHidden } from "@mui/utils";
-import FormControl from "@mui/material/FormControl";
-import InputLabel from "@mui/material/InputLabel";
-import Select from "@mui/material/Select";
-import List from "@mui/material/List";
-import ListItem from "@mui/material/ListItem";
-import ListItemText from "@mui/material/ListItemText";
-import Divider from "@mui/material/Divider";
+
+import Menu from "@mui/material/Menu";
+import MoreVertIcon from "@mui/icons-material/MoreVert";
+
 import TaskCommentsModal from "../modals/TaskCommentsModal";
 import CreateTaskModal from "../modals/CreateTaskModal";
 import ConfirmationDialog from "../modals/ConfirmationDialog";
 import useTasksApi from "../hooks/useTasksApi";
-import useCategoriesApi from "../hooks/useCategoriesApi"; 
-
-import Menu from "@mui/material/Menu";
-
-import MoreVertIcon from "@mui/icons-material/MoreVert";
-
+import useCategoriesApi from "../hooks/useCategoriesApi";
+import EnhancedTableToolbar from "../components/EnhancedTableToolbar";
+import { Tableskeleton } from "../skeleton/Tableskeleton";
 const headCells = [
   {
     id: "title",
@@ -62,18 +46,6 @@ const headCells = [
     disablePadding: false,
     label: "Description",
   },
-  // {
-  //   id: "category", 
-  //   numeric: false,
-  //   disablePadding: false,
-  //   label: "Category",
-  // },
-  // {
-  //   id: "subCategory", 
-  //   numeric: false,
-  //   disablePadding: false,
-  //   label: "SubCategory",
-  // },
   {
     id: "status",
     numeric: false,
@@ -94,13 +66,7 @@ const headCells = [
   },
 ];
 
-const priorityOptions = [
-  { value: "All", label: "All Priorities" },
-  { value: "Low", label: "Low" },
-  { value: "Medium", label: "Medium" },
-  { value: "High", label: "High" },
-  { value: "Urgent", label: "Urgent" },
-];
+
 
 function descendingComparator(a, b, orderBy) {
   if (b[orderBy] < a[orderBy]) {
@@ -169,142 +135,6 @@ EnhancedTableHead.propTypes = {
   rowCount: PropTypes.number.isRequired,
 };
 
-function EnhancedTableToolbar(props) {
-  const {
-    numSelected,
-    onCreateTask,
-    priorityFilter,
-    onPriorityFilterChange,
-    categories, // NEW
-    selectedCategoryFilter, // NEW
-    onCategoryFilterChange, // NEW
-    subCategories, // NEW
-    selectedSubCategoryFilter, // NEW
-    onSubCategoryFilterChange, // NEW
-  } = props;
-
-  return (
-    <Toolbar
-      sx={[
-        {
-          pl: { sm: 2 },
-          pr: { xs: 1, sm: 1 },
-        },
-        numSelected > 0 && {
-          bgcolor: (theme) =>
-            alpha(
-              theme.palette.primary.main,
-              theme.palette.action.activatedOpacity
-            ),
-        },
-      ]}
-    >
-      {numSelected > 0 ? (
-        <Typography
-          sx={{ flex: "1 1 100%" }}
-          color="inherit"
-          variant="subtitle1"
-          component="div"
-        >
-          {numSelected} selected
-        </Typography>
-      ) : (
-        <Typography
-          sx={{ flex: "1 1 100%" }}
-          variant="h6"
-          id="tableTitle"
-          component="div"
-        >
-          Tasks
-        </Typography>
-      )}
-
-      {/* Category Filter */}
-      <FormControl sx={{ m: 1, minWidth: 120 }} size="small">
-        <InputLabel id="category-filter-label">Category</InputLabel>
-        <Select
-          labelId="category-filter-label"
-          id="category-filter-select"
-          value={selectedCategoryFilter || "All"}
-          label="Category"
-          onChange={onCategoryFilterChange}
-        >
-          <MenuItem value="All">All Categories</MenuItem>
-          {categories.map((category) => (
-            <MenuItem key={category.id} value={category.id}>
-              {category.name}
-            </MenuItem>
-          ))}
-        </Select>
-      </FormControl>
-
-      {/* SubCategory Filter */}
-      <FormControl sx={{ m: 1, minWidth: 120 }} size="small" disabled={!selectedCategoryFilter || selectedCategoryFilter === "All"}>
-        <InputLabel id="sub-category-filter-label">SubCategory</InputLabel>
-        <Select
-          labelId="sub-category-filter-label"
-          id="sub-category-filter-select"
-          value={selectedSubCategoryFilter || "All"}
-          label="SubCategory"
-          onChange={onSubCategoryFilterChange}
-        >
-          <MenuItem value="All">All SubCategories</MenuItem>
-          {subCategories.map((subCategory) => (
-            <MenuItem key={subCategory.id} value={subCategory.id}>
-              {subCategory.name}
-            </MenuItem>
-          ))}
-        </Select>
-      </FormControl>
-
-      {/* Priority Filter */}
-      <FormControl sx={{ m: 1, minWidth: 120 }} size="small">
-        <InputLabel id="priority-filter-label">Priority</InputLabel>
-        <Select
-          labelId="priority-filter-label"
-          id="priority-filter-select"
-          value={priorityFilter}
-          label="Priority"
-          onChange={onPriorityFilterChange}
-        >
-          {priorityOptions.map((option) => (
-            <MenuItem key={option.value} value={option.value}>
-              {option.label}
-            </MenuItem>
-          ))}
-        </Select>
-      </FormControl>
-
-      <Tooltip title="Create Task">
-        <Button
-          variant="contained"
-          size="small"
-          startIcon={<AddIcon />}
-          onClick={onCreateTask}
-          sx={{ textTransform: "none" }}
-        >
-          Create Task
-        </Button>
-      </Tooltip>
-    </Toolbar>
-  );
-}
-
-EnhancedTableToolbar.propTypes = {
-  numSelected: PropTypes.number.isRequired,
-  onCreateTask: PropTypes.func.isRequired,
-  onDeleteSelected: PropTypes.func.isRequired,
-  deleteLoading: PropTypes.bool.isRequired,
-  priorityFilter: PropTypes.string.isRequired,
-  onPriorityFilterChange: PropTypes.func.isRequired,
-  categories: PropTypes.array.isRequired, // NEW
-  selectedCategoryFilter: PropTypes.oneOfType([PropTypes.string, PropTypes.number]), // NEW
-  onCategoryFilterChange: PropTypes.func.isRequired, // NEW
-  subCategories: PropTypes.array.isRequired, // NEW
-  selectedSubCategoryFilter: PropTypes.oneOfType([PropTypes.string, PropTypes.number]), // NEW
-  onSubCategoryFilterChange: PropTypes.func.isRequired, // NEW
-};
-
 export default function EnhancedTable() {
   const [order, setOrder] = React.useState("asc");
   const [orderBy, setOrderBy] = React.useState("title");
@@ -327,9 +157,12 @@ export default function EnhancedTable() {
   const [confirmDialogOpen, setConfirmDialogOpen] = React.useState(false);
   const [priorityFilter, setPriorityFilter] = React.useState("All");
 
-  
-  const [selectedCategoryFilter, setSelectedCategoryFilter] = React.useState("All");
-  const [selectedSubCategoryFilter, setSelectedSubCategoryFilter] = React.useState("All");
+  const [taskTitleSearchTerm, setTaskTitleSearchTerm] = React.useState("");
+  const [subCategorySearchTerm, setSubCategorySearchTerm] = React.useState("");
+
+  const [selectedTaskTitleId, setSelectedTaskTitleId] = React.useState(null);
+  const [selectedSubCategoryId, setSelectedSubCategoryId] =
+    React.useState(null);
 
   const [commentsModalOpen, setCommentsModalOpen] = React.useState(false);
   const [currentTaskIdForComments, setCurrentTaskIdForComments] =
@@ -342,6 +175,7 @@ export default function EnhancedTable() {
       severity,
     });
   };
+
   const handleMenuClick = (event, id) => {
     setAnchorEl(event.currentTarget);
     setOpenMenuId(id);
@@ -356,7 +190,6 @@ export default function EnhancedTable() {
     setSnackbar((prev) => ({ ...prev, open: false }));
   };
 
-  // NEW: Use new API hooks for categories and subcategories
   const {
     categories,
     loading: categoriesLoading,
@@ -365,9 +198,7 @@ export default function EnhancedTable() {
     loading: subCategoriesLoading,
     fetchSubCategories,
   } = useCategoriesApi();
- 
-console.log("category--->",categories)
-console.log("sub category--->",subCategories);
+
   const {
     tasks,
     loading: tasksLoading,
@@ -379,41 +210,33 @@ console.log("sub category--->",subCategories);
     deleteTasks,
   } = useTasksApi();
 
-  // Fetch initial data
   React.useEffect(() => {
     fetchCategories();
-  }, [fetchCategories]);
+    fetchSubCategories();
+  }, [fetchCategories, fetchSubCategories]);
 
-  // Fetch subcategories when selectedCategoryFilter changes
-  React.useEffect(() => {
-    if (selectedCategoryFilter && selectedCategoryFilter !== "All") {
-      fetchSubCategories(selectedCategoryFilter);
-    } else {
-      // Clear subcategories if no category is selected
-      fetchSubCategories(null); // Pass null or empty array to clear
-      setSelectedSubCategoryFilter("All"); // Reset subcategory filter
-    }
-  }, [selectedCategoryFilter, fetchSubCategories]);
-
-  // Fetch tasks when filters change
   React.useEffect(() => {
     const filters = {};
     if (priorityFilter !== "All") {
       filters.priority = priorityFilter;
     }
-    if (selectedSubCategoryFilter !== "All") {
-      filters.sub_category_id = selectedSubCategoryFilter;
-    } else if (selectedCategoryFilter !== "All") {
-       //
+
+    if (selectedSubCategoryId) {
+      filters.sub_category_id = selectedSubCategoryId;
     }
-     if(selectedCategoryFilter!== "All"){
-filters.category_id=selectedCategoryFilter;
+
+    if (selectedTaskTitleId) {
+      filters.id = selectedTaskTitleId;
     }
-    
-    console.log(filters);
+
     fetchTasks(filters);
-  }, [fetchTasks, priorityFilter, selectedSubCategoryFilter]); 
-  
+  }, [
+    fetchTasks,
+    priorityFilter,
+    selectedSubCategoryId,
+    selectedTaskTitleId, // Add selectedTaskTitleId to dependencies
+  ]);
+
   const handleDeleteSelected = async () => {
     if (selected.length === 0) return;
     setConfirmDialogOpen(true);
@@ -473,8 +296,6 @@ filters.category_id=selectedCategoryFilter;
     setPage(0);
   };
 
- 
-
   const getStatusColor = (status) => {
     switch (status) {
       case "completed":
@@ -507,43 +328,85 @@ filters.category_id=selectedCategoryFilter;
     setPage(0);
   };
 
-  // NEW: Category filter handler
-  const handleCategoryFilterChange = (event) => {
-    const categoryId = event.target.value;
-    console.log(categoryId);
-    setSelectedCategoryFilter(categoryId);
-    setSelectedSubCategoryFilter("All"); 
+  const handleTaskTitleSearchChange = (value) => {
+    console.log(value.id);
+
+    if (typeof value === "string") {
+      setTaskTitleSearchTerm(value);
+      setSelectedTaskTitleId(null);
+    } else if (value && typeof value === "object" && value.id) {
+      setTaskTitleSearchTerm(value.name);
+      setSelectedTaskTitleId(value.id);
+    } else {
+      setTaskTitleSearchTerm("");
+      setSelectedTaskTitleId(null);
+    }
     setPage(0);
   };
 
-
-  const handleSubCategoryFilterChange = (event) => {
-    setSelectedSubCategoryFilter(event.target.value);
+  const handleSubCategorySearchChange = (value) => {
+    console.log(value.id);
+    if (typeof value === "string") {
+      setSubCategorySearchTerm(value);
+      setSelectedSubCategoryId(null);
+    } else if (value && typeof value === "object" && value.id) {
+      setSubCategorySearchTerm(value.name);
+      setSelectedSubCategoryId(value.id);
+    } else {
+      setSubCategorySearchTerm("");
+      setSelectedSubCategoryId(null);
+    }
     setPage(0);
   };
 
-  
   const filteredRows = React.useMemo(() => {
     const tasksArray = Array.isArray(tasks) ? tasks : [];
-    let currentFilteredTasks = tasksArray;
+    let currentFilteredTasks = [...tasksArray];
 
-    
     if (priorityFilter !== "All") {
-      currentFilteredTasks = currentFilteredTasks.filter((row) => row.priority === priorityFilter);
+      currentFilteredTasks = currentFilteredTasks.filter(
+        (row) => row.priority === priorityFilter
+      );
     }
 
-    
-    if (selectedCategoryFilter !== "All" && selectedSubCategoryFilter === "All") {
-        currentFilteredTasks = currentFilteredTasks.filter(task =>
-            task.subCategory && task.subCategory.category &&
-            task.subCategory.category.id === selectedCategoryFilter
-        );
+    // Client-side task title filter: Only apply if no specific task ID is selected
+    // because the API call already filters by selectedTaskTitleId.
+    if (!selectedTaskTitleId && taskTitleSearchTerm) {
+      const lowerCaseSearchTerm = String(taskTitleSearchTerm).toLowerCase();
+      currentFilteredTasks = currentFilteredTasks.filter(
+        (task) =>
+          (task.title &&
+            String(task.title).toLowerCase().includes(lowerCaseSearchTerm)) ||
+          (task.description &&
+            String(task.description)
+              .toLowerCase()
+              .includes(lowerCaseSearchTerm))
+      );
     }
-  
+
+    // Client-side subcategory filter: Only apply if no specific subCategory ID is selected
+    // because the API call already filters by selectedSubCategoryId.
+    if (!selectedSubCategoryId && subCategorySearchTerm) {
+      const lowerCaseSearchTerm = String(subCategorySearchTerm).toLowerCase();
+      currentFilteredTasks = currentFilteredTasks.filter(
+        (task) =>
+          task.subCategory &&
+          task.subCategory.name &&
+          String(task.subCategory.name)
+            .toLowerCase()
+            .includes(lowerCaseSearchTerm)
+      );
+    }
 
     return currentFilteredTasks;
-  }, [tasks, priorityFilter, selectedCategoryFilter, selectedSubCategoryFilter]);
-
+  }, [
+    tasks,
+    priorityFilter,
+    taskTitleSearchTerm,
+    selectedTaskTitleId,
+    subCategorySearchTerm,
+    selectedSubCategoryId,
+  ]);
 
   const emptyRows =
     page > 0 ? Math.max(0, (1 + page) * rowsPerPage - filteredRows.length) : 0;
@@ -599,7 +462,7 @@ filters.category_id=selectedCategoryFilter;
     <Box sx={{ width: "100%" }}>
       <Paper sx={{ width: "100%", mb: 2 }}>
         <EnhancedTableToolbar
-          numSelected={selected.length}
+        
           onCreateTask={() => {
             setEdit(false);
             setEditTaskId(null);
@@ -610,12 +473,13 @@ filters.category_id=selectedCategoryFilter;
           deleteLoading={deleteLoading}
           priorityFilter={priorityFilter}
           onPriorityFilterChange={handlePriorityFilterChange}
-          categories={categories} // NEW
-          selectedCategoryFilter={selectedCategoryFilter} // NEW
-          onCategoryFilterChange={handleCategoryFilterChange} // NEW
-          subCategories={(subCategories||[]).filter(sub => sub.category_id === selectedCategoryFilter || selectedCategoryFilter === "All")} // NEW: Filter subcategories for the toolbar dropdown
-          selectedSubCategoryFilter={selectedSubCategoryFilter} // NEW
-          onSubCategoryFilterChange={handleSubCategoryFilterChange} // NEW
+          categories={categories}
+          subCategories={subCategories}
+          taskTitleSearchTerm={taskTitleSearchTerm}
+          onTaskTitleSearchChange={handleTaskTitleSearchChange}
+          subCategorySearchTerm={subCategorySearchTerm}
+          onSubCategorySearchChange={handleSubCategorySearchChange}
+          tasks={tasks}
         />
         <TableContainer>
           <Table
@@ -634,8 +498,8 @@ filters.category_id=selectedCategoryFilter;
             <TableBody>
               {tasksLoading || categoriesLoading || subCategoriesLoading ? (
                 <TableRow>
-                  <TableCell colSpan={8} align="center">
-                    <CircularProgress />
+                  <TableCell  align="center">
+                    <Tableskeleton/>
                   </TableCell>
                 </TableRow>
               ) : visibleRows.length === 0 ? (
@@ -646,17 +510,17 @@ filters.category_id=selectedCategoryFilter;
                 </TableRow>
               ) : (
                 visibleRows.map((row, index) => {
-                  const isItemSelected = selected.includes(row.id);
+
                   const labelId = `enhanced-table-checkbox-${index}`;
 
                   return (
                     <TableRow
                       hover
                       role="checkbox"
-                      aria-checked={isItemSelected}
+                     
                       tabIndex={-1}
                       key={row.id}
-                      selected={isItemSelected}
+                    
                       sx={{ cursor: "pointer" }}
                     >
                       <TableCell padding="checkbox"></TableCell>
@@ -672,24 +536,17 @@ filters.category_id=selectedCategoryFilter;
                         </Typography>
                       </TableCell>
                       <TableCell align="left">
-                        <Typography variant="body2" noWrap>
-                          {row.description}
-                        </Typography>
+                        <div
+                          style={{
+                            maxWidth: "200px",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap",
+                          }} // Example: basic CSS for truncation if desired
+                          dangerouslySetInnerHTML={{ __html: row.description }}
+                        />
                       </TableCell>
-                  
-                      {/* <TableCell align="left">
-                        <Typography variant="body2" noWrap>
-                          {row.subCategory?.category?.name || "N/A"}
-                        </Typography>
-                      </TableCell>
-                    
-                      <TableCell align="left">
-                        <Typography variant="body2" noWrap>
-                          {row.subCategory?.name || "N/A"}
-                        </Typography>
-                      </TableCell> */}
 
-        
                       <TableCell align="left">
                         <Box
                           sx={{
@@ -736,7 +593,7 @@ filters.category_id=selectedCategoryFilter;
                           }
                           aria-haspopup="true"
                           onClick={(e) => {
-                            e.stopPropagation(); // Prevent row selection
+                            e.stopPropagation();
                             handleMenuClick(e, row.id);
                           }}
                           size="small"
@@ -768,7 +625,7 @@ filters.category_id=selectedCategoryFilter;
                           </MenuItem>
                           <MenuItem
                             onClick={() => {
-                              setSelected([row.id]); // Select only this row for deletion
+                              setSelected([row.id]);
                               setConfirmDialogOpen(true);
                               handleMenuClose();
                             }}

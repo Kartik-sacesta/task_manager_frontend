@@ -15,6 +15,7 @@ import Chip from "@mui/material/Chip";
 import { formatDistanceToNow, parseISO } from "date-fns";
 
 import useNotifications from "./../hooks/useNotifications";
+import { Notificationskeleton } from "../skeleton/Notificationskeleton";
 
 export default function NotificationsPage() {
   const { loading, notifications, notificationCounts, error } =
@@ -90,14 +91,15 @@ export default function NotificationsPage() {
                   }
                   secondary={
                     <React.Fragment>
-                      <Typography
-                        sx={{ display: "inline" }}
-                        component="span"
-                        variant="body2"
-                        color="text.primary"
-                      >
-                        {task.description}
-                      </Typography>
+                      <div
+                          style={{
+                            maxWidth: "200px",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap",
+                          }} // Example: basic CSS for truncation if desired
+                          dangerouslySetInnerHTML={{ __html: task.description }}
+                        />
                       <br />
                       <Typography variant="body2" color="text.secondary">
                         Deadline:{" "}
@@ -275,9 +277,9 @@ export default function NotificationsPage() {
         </Stack>
 
         {loading ? (
-          <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
-            <CircularProgress />
-          </Box>
+         
+           <Notificationskeleton/>
+          
         ) : (
           renderTaskList(getFilteredTasks(), getFilterTitle())
         )}

@@ -277,7 +277,7 @@ const Categorypage = () => {
     handleSubCategoryMenuClose();
   };
 
-  // DataGrid Columns for Categories
+
   const categoryColumns = [
     { field: "id", headerName: "ID", width: 90 },
     { field: "name", headerName: "Name", width: 200 },
@@ -297,7 +297,7 @@ const Categorypage = () => {
     {
       field: "actions",
       headerName: "Actions",
-      width: 100, // Adjusted width for the ellipsis icon
+      width: 100, 
       renderCell: (params) => (
         <Box>
           <IconButton
@@ -432,14 +432,14 @@ const Categorypage = () => {
         Category & SubCategory Management
       </Typography>
 
-      <Tab  s
+      <Tabs
         value={activeTab}
         onChange={(e, newValue) => setActiveTab(newValue)}
         sx={{ mb: 3 }}
       >
         <Tab label="Categories" />
         <Tab label="SubCategories" />
-      </Tab>
+      </Tabs>
 
       {activeTab === 0 && (
         <Card>

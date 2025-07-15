@@ -16,26 +16,16 @@ const useTasksApi = (showSnackbar) => {
       setLoading(true);
       try {
         const token = getToken();
-
+        console.log("filtters", filter);
         let url = `${import.meta.env.VITE_REACT_APP_BACKEND_URL}/task`;
 
         if (filter && filter.sub_category_id) {
           url += `/${filter.sub_category_id}`;
         }
-
-        const queryParams = {};
-
-        if (filter && filter.category_id) {
-          url += `?category_id=${filter.category_id}`;
-          queryParams.category_id = filter.category_id;
+        if (filter && filter.id) {
+          url += `/search/${filter.id}`;
         }
-
-        console.log(
-          "Fetching tasks from URL:",
-          url,
-          "with params:",
-          queryParams
-        );
+        console.log(url);
 
         const response = await axios.get(url, {
           headers: {
@@ -43,7 +33,7 @@ const useTasksApi = (showSnackbar) => {
           },
           // params: queryParams,
         });
-        console.log("response", response.data);
+        console.log(response);
         if (response.status === 200) {
           setTasks(Array.isArray(response.data) ? response.data : []);
         } else {
@@ -61,6 +51,7 @@ const useTasksApi = (showSnackbar) => {
     },
     [showSnackbar]
   );
+
   console.log(tasks);
   useEffect(() => {
     fetchTasks();

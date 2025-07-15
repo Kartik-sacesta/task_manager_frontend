@@ -18,11 +18,15 @@ import {
   Toolbar,
   Typography,
   Tooltip,
+  Box,
+  Divider,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { alpha } from "@mui/material/styles";
+
+import { Editor } from "@tinymce/tinymce-react";
 
 import useCategoriesApi from "../hooks/useCategoriesApi";
 
@@ -70,6 +74,16 @@ function CreateTaskModal({
 
   React.useEffect(() => {
     if (edit && initialData) {
+      let initialCategoryId = "";
+      if (initialData.sub_category_id) {
+        const foundSubCategory = subCategories.find(
+          (sub) => sub.id === initialData.sub_category_id
+        );
+        if (foundSubCategory) {
+          initialCategoryId = foundSubCategory.category_id;
+        }
+      }
+
       setFormData({
         title: initialData.title || "",
         description: initialData.description || "",
@@ -80,6 +94,7 @@ function CreateTaskModal({
             : "",
         status: initialData.status || "pending",
         priority: initialData.priority || "Medium",
+        categoryId: initialCategoryId,
         subCategoryId: initialData.sub_category_id || "",
       });
     } else {
@@ -89,12 +104,12 @@ function CreateTaskModal({
         expiredDate: "",
         status: "pending",
         priority: "Medium",
-
+        categoryId: "",
         subCategoryId: "",
       });
     }
     setErrors({});
-  }, [open, edit, initialData]);
+  }, [open, edit, initialData, subCategories]);
 
   const handleChange = (field) => (event) => {
     setFormData((prev) => ({
@@ -107,11 +122,23 @@ function CreateTaskModal({
         [field]: "",
       }));
     }
-    // If category changes, reset subcategory
     if (field === "categoryId") {
       setFormData((prev) => ({
         ...prev,
         subCategoryId: "",
+      }));
+    }
+  };
+
+  const handleEditorChange = (content, editor) => {
+    setFormData((prev) => ({
+      ...prev,
+      description: content,
+    }));
+    if (errors.description) {
+      setErrors((prev) => ({
+        ...prev,
+        description: "",
       }));
     }
   };
@@ -123,7 +150,10 @@ function CreateTaskModal({
       newErrors.title = "Title is required";
     }
 
-    if (!formData.description.trim()) {
+    const strippedDescription = formData.description
+      .replace(/<[^>]*>/g, "")
+      .trim();
+    if (!strippedDescription) {
       newErrors.description = "Description is required";
     }
 
@@ -146,14 +176,16 @@ function CreateTaskModal({
   const handleSubmit = () => {
     if (validateForm()) {
       const submitData = {
-        ...formData,
+        title: formData.title,
+        description: formData.description,
         expried_date: new Date(formData.expiredDate).toISOString(),
+        status: formData.status,
+        priority: formData.priority,
       };
 
       if (formData.subCategoryId) {
         submitData.sub_category_id = formData.subCategoryId;
       } else {
-        submitData.category_id = null;
         submitData.sub_category_id = null;
       }
 
@@ -177,158 +209,243 @@ function CreateTaskModal({
 
   const today = new Date().toISOString().split("T")[0];
 
-  
   const filteredSubCategories = subCategories.filter(
     (sub) => sub.category_id === formData.categoryId
   );
 
   return (
-    <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth fullScreen>
-      <DialogTitle>
+    <Dialog
+      open={open}
+      onClose={handleClose}
+      maxWidth="md"
+      fullWidth
+      sx={{
+        "& .MuiDialog-paper": {
+          position: "absolute",
+          right: 0,
+          margin: 0,
+          height: "100%",
+          maxHeight: "100%",
+          width: { xs: "100%", sm: "500px", md: "600px" },
+          borderRadius: 0,
+        },
+      }}
+    >
+      <DialogTitle
+        sx={{
+          bgcolor: "primary.main",
+          color: "white",
+          py: 2,
+        }}
+      >
         <Stack
           direction="row"
           justifyContent="space-between"
           alignItems="center"
         >
-          {edit ? "Edit Task" : "Create New Task"}
-          <IconButton aria-label="close" onClick={handleClose}>
+          <Typography variant="h6" component="div">
+            {edit ? "Edit Task" : "Create New Task"}
+          </Typography>
+          <IconButton
+            aria-label="close"
+            onClick={handleClose}
+            sx={{ color: "white" }}
+          >
             <CloseIcon />
           </IconButton>
         </Stack>
       </DialogTitle>
-      <DialogContent>
-        <Grid container spacing={2} sx={{ mt: 1 }}>
-          <Grid item xs={12}>
-            <TextField
-              fullWidth
-              label="Title"
-              value={formData.title}
-              onChange={handleChange("title")}
-              error={!!errors.title}
-              helperText={errors.title}
-              disabled={loading}
-              margin="dense"
-            />
+
+      <DialogContent sx={{ p: 3 }}>
+        <Box sx={{ mt: 1 }}>
+          {/* Basic Information Section */}
+          <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 600 }}>
+            Basic Information
+          </Typography>
+
+          <Grid container spacing={3}>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="Task Title"
+                value={formData.title}
+                onChange={handleChange("title")}
+                error={!!errors.title}
+                helperText={errors.title}
+                disabled={loading}
+                variant="outlined"
+                placeholder="Enter task title..."
+              />
+            </Grid>
+
+            <Grid item xs={12}>
+              <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 500 }}>
+                Description
+              </Typography>
+              <Box
+                sx={{
+                  border: errors.description
+                    ? "1px solid #d32f2f"
+                    : "1px solid #e0e0e0",
+                  borderRadius: 1,
+                }}
+              >
+                <Editor
+                  apiKey="3it5kj2j0kbpxlv0zkfukdl7w5161114jj3f2mf8lc5wax6m"
+                  init={{
+                    height: 200,
+                    menubar: false,
+                    plugins: [
+                      "advlist autolink lists link image charmap print preview anchor",
+                      "searchreplace visualblocks code fullscreen",
+                      "insertdatetime media table paste code help wordcount",
+                    ],
+                    toolbar:
+                      "undo redo | formatselect | " +
+                      "bold italic backcolor | alignleft aligncenter " +
+                      "alignright alignjustify | bullist numlist outdent indent | " +
+                      "removeformat | help",
+                    content_style:
+                      "body { font-family:Helvetica,Arial,sans-serif; font-size:14px; padding: 10px; }",
+                    placeholder: "Enter task description...",
+                  }}
+                  value={formData.description}
+                  onEditorChange={handleEditorChange}
+                  disabled={loading}
+                />
+              </Box>
+              {errors.description && (
+                <Typography
+                  color="error"
+                  variant="caption"
+                  sx={{ mt: 0.5, display: "block" }}
+                >
+                  {errors.description}
+                </Typography>
+              )}
+            </Grid>
           </Grid>
 
-          <Grid item xs={12}>
-            <TextField
-              fullWidth
-              label="Description"
-              multiline
-              rows={3}
-              value={formData.description}
-              onChange={handleChange("description")}
-              error={!!errors.description}
-              helperText={errors.description}
-              disabled={loading}
-              margin="dense"
-            />
+          <Divider sx={{ my: 3 }} />
+
+          <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 600 }}>
+            Task Details
+          </Typography>
+
+          <Grid container spacing={3}>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="Due Date"
+                type="date"
+                value={formData.expiredDate}
+                onChange={handleChange("expiredDate")}
+                InputLabelProps={{
+                  shrink: true,
+                }}
+                inputProps={{
+                  min: today,
+                }}
+                error={!!errors.expiredDate}
+                helperText={errors.expiredDate}
+                disabled={loading}
+                variant="outlined"
+              />
+            </Grid>
+
+            <Grid item xs={12} sm={6}>
+              <FormControl fullWidth variant="outlined">
+                <InputLabel>Status</InputLabel>
+                <Select
+                  value={formData.status}
+                  onChange={handleChange("status")}
+                  disabled={loading}
+                  label="Status"
+                >
+                  {statusOptions.map((option) => (
+                    <MenuItem key={option.value} value={option.value}>
+                      {option.label}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+
+            <Grid item xs={12} sm={6}>
+              <FormControl fullWidth variant="outlined">
+                <InputLabel>Priority</InputLabel>
+                <Select
+                  value={formData.priority}
+                  onChange={handleChange("priority")}
+                  disabled={loading}
+                  label="Priority"
+                >
+                  {priorityOptions.map((option) => (
+                    <MenuItem key={option.value} value={option.value}>
+                      {option.label}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
           </Grid>
 
-          <Grid item xs={12} sm={6}>
-            <TextField
-              fullWidth
-              label="Expired Date"
-              type="date"
-              value={formData.expiredDate}
-              onChange={handleChange("expiredDate")}
-              InputLabelProps={{
-                shrink: true,
-              }}
-              inputProps={{
-                min: today,
-              }}
-              error={!!errors.expiredDate}
-              helperText={errors.expiredDate}
-              disabled={loading}
-              margin="dense"
-            />
-          </Grid>
+          <Divider sx={{ my: 3 }} />
 
-          <Grid item xs={12} sm={6}>
-            <TextField
-              fullWidth
-              label="Status"
-              select
-              value={formData.status}
-              onChange={handleChange("status")}
-              disabled={loading}
-              margin="dense"
-            >
-              {statusOptions.map((option) => (
-                <MenuItem key={option.value} value={option.value}>
-                  {option.label}
-                </MenuItem>
-              ))}
-            </TextField>
-          </Grid>
+          <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 600 }}>
+            Category & Classification
+          </Typography>
 
-          <Grid item xs={12} sm={6}>
-            <TextField
-              fullWidth
-              label="Priority"
-              select
-              value={formData.priority}
-              onChange={handleChange("priority")}
-              disabled={loading}
-              margin="dense"
-            >
-              {priorityOptions.map((option) => (
-                <MenuItem key={option.value} value={option.value}>
-                  {option.label}
-                </MenuItem>
-              ))}
-            </TextField>
-          </Grid>
+          <Grid spacing={3}>
+            <Grid item xs={12} sm={6}>
+              <FormControl fullWidth variant="outlined">
+                <InputLabel>Category</InputLabel>
+                <Select
+                  value={formData.categoryId}
+                  onChange={handleChange("categoryId")}
+                  disabled={loading}
+                  label="Category"
+                >
+                  {categories.map((category) => (
+                    <MenuItem key={category.id} value={category.id}>
+                      {category.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
 
-          
-          <Grid item xs={12} sm={6}>
-            <TextField
-              fullWidth
-              label="Category"
-              select
-              value={formData.categoryId}
-              onChange={handleChange("categoryId")}
-              disabled={loading}
-              margin="dense"
-            >
-              <MenuItem value="">
-                <em>None</em>
-              </MenuItem>
-              {categories.map((category) => (
-                <MenuItem key={category.id} value={category.id}>
-                  {category.name}
-                </MenuItem>
-              ))}
-            </TextField>
+            <Grid item xs={12} sm={6}>
+              <FormControl fullWidth displayEmpty variant="outlined">
+                <InputLabel>SubCategory</InputLabel>
+                <Select
+                  value={formData.subCategoryId}
+                  onChange={handleChange("subCategoryId")}
+                  disabled={loading || !formData.categoryId}
+                  label="SubCategory"
+                >
+                  <MenuItem value="">
+                    <em>Select SubCategory</em>
+                  </MenuItem>
+                  {filteredSubCategories.map((subCategory) => (
+                    <MenuItem key={subCategory.id} value={subCategory.id}>
+                      {subCategory.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
           </Grid>
-
-        
-          <Grid item xs={12} sm={6}>
-            <TextField
-              fullWidth
-              label="SubCategory"
-              select
-              value={formData.subCategoryId}
-              onChange={handleChange("subCategoryId")}
-              disabled={loading || !formData.categoryId}
-              margin="dense"
-            >
-              <MenuItem value="">
-                <em>None</em>
-              </MenuItem>
-              {filteredSubCategories.map((subCategory) => (
-                <MenuItem key={subCategory.id} value={subCategory.id}>
-                  {subCategory.name}
-                </MenuItem>
-              ))}
-            </TextField>
-          </Grid>
-        </Grid>
+        </Box>
       </DialogContent>
-      <DialogActions>
-        <Button onClick={handleClose} disabled={loading}>
+
+      <DialogActions sx={{ p: 3, bgcolor: "grey.50" }}>
+        <Button
+          onClick={handleClose}
+          disabled={loading}
+          variant="outlined"
+          sx={{ minWidth: 100 }}
+        >
           Cancel
         </Button>
         <Button
@@ -338,6 +455,7 @@ function CreateTaskModal({
           startIcon={
             loading ? <CircularProgress size={16} color="inherit" /> : null
           }
+          sx={{ minWidth: 120 }}
         >
           {loading
             ? edit
@@ -362,163 +480,3 @@ CreateTaskModal.propTypes = {
 };
 
 export default CreateTaskModal;
-
-function EnhancedTableToolbar(props) {
-  const {
-    numSelected,
-    onCreateTask,
-    priorityFilter,
-    onPriorityFilterChange,
-    categories, 
-    selectedCategoryFilter, 
-    onCategoryFilterChange, 
-    subCategories, 
-    selectedSubCategoryFilter, 
-    onSubCategoryFilterChange, 
-    onDeleteSelected,
-    deleteLoading, 
-  } = props;
-
-  return (
-    <Toolbar
-      sx={[
-        {
-          pl: { sm: 2 },
-          pr: { xs: 1, sm: 1 },
-        },
-        numSelected > 0 && {
-          bgcolor: (theme) =>
-            alpha(
-              theme.palette.primary.main,
-              theme.palette.action.activatedOpacity
-            ),
-        },
-      ]}
-    >
-      {numSelected > 0 ? (
-        <Typography
-          sx={{ flex: "1 1 100%" }}
-          color="inherit"
-          variant="subtitle1"
-          component="div"
-        >
-          {numSelected} selected
-        </Typography>
-      ) : (
-        <Typography
-          sx={{ flex: "1 1 100%" }}
-          variant="h6"
-          id="tableTitle"
-          component="div"
-        >
-          Tasks
-        </Typography>
-      )}
-
-      {/* Category Filter */}
-      <FormControl sx={{ m: 1, minWidth: 120 }} size="small">
-        <InputLabel id="category-filter-label">Category</InputLabel>
-        <Select
-          labelId="category-filter-label"
-          id="category-filter-select"
-          value={selectedCategoryFilter || "All"}
-          label="Category"
-          onChange={onCategoryFilterChange}
-        >
-          <MenuItem value="All">All Categories</MenuItem>
-          {categories.map((category) => (
-            <MenuItem key={category.id} value={category.id}>
-              {category.name}
-            </MenuItem>
-          ))}
-        </Select>
-      </FormControl>
-
-      {/* SubCategory Filter */}
-      <FormControl
-        sx={{ m: 1, minWidth: 120 }}
-        size="small"
-        disabled={!selectedCategoryFilter || selectedCategoryFilter === "All"}
-      >
-        <InputLabel id="sub-category-filter-label">SubCategory</InputLabel>
-        <Select
-          labelId="sub-category-filter-label"
-          id="sub-category-filter-select"
-          value={selectedSubCategoryFilter || "All"}
-          label="SubCategory"
-          onChange={onSubCategoryFilterChange}
-        >
-          <MenuItem value="All">All SubCategories</MenuItem>
-          {subCategories.map((subCategory) => (
-            <MenuItem key={subCategory.id} value={subCategory.id}>
-              {subCategory.name}
-            </MenuItem>
-          ))}
-        </Select>
-      </FormControl>
-
-      {/* Priority Filter */}
-      <FormControl sx={{ m: 1, minWidth: 120 }} size="small">
-        <InputLabel id="priority-filter-label">Priority</InputLabel>
-        <Select
-          labelId="priority-filter-label"
-          id="priority-filter-select"
-          value={priorityFilter}
-          label="Priority"
-          onChange={onPriorityFilterChange}
-        >
-          {priorityOptions.map((option) => (
-            <MenuItem key={option.value} value={option.value}>
-              {option.label}
-            </MenuItem>
-          ))}
-        </Select>
-      </FormControl>
-
-      {numSelected > 0 && (
-        <Tooltip title="Delete">
-          <IconButton
-            aria-label="delete"
-            onClick={onDeleteSelected}
-            disabled={deleteLoading}
-          >
-            {deleteLoading ? <CircularProgress size={20} /> : <DeleteIcon />}
-          </IconButton>
-        </Tooltip>
-      )}
-
-      <Tooltip title="Create Task">
-        <Button
-          variant="contained"
-          size="small"
-          startIcon={<AddIcon />}
-          onClick={onCreateTask}
-          sx={{ textTransform: "none" }}
-        >
-          Create Task
-        </Button>
-      </Tooltip>
-    </Toolbar>
-  );
-}
-
-EnhancedTableToolbar.propTypes = {
-  numSelected: PropTypes.number.isRequired,
-  onCreateTask: PropTypes.func.isRequired,
-  onDeleteSelected: PropTypes.func.isRequired,
-  deleteLoading: PropTypes.bool.isRequired,
-  priorityFilter: PropTypes.string.isRequired,
-  onPriorityFilterChange: PropTypes.func.isRequired,
-  categories: PropTypes.array.isRequired, 
-  selectedCategoryFilter: PropTypes.oneOfType([
-    PropTypes.string,
-    PropTypes.number,
-  ]), 
-  onCategoryFilterChange: PropTypes.func.isRequired, 
-  subCategories: PropTypes.array.isRequired, 
-  selectedSubCategoryFilter: PropTypes.oneOfType([
-    PropTypes.string,
-    PropTypes.number,
-  ]), 
-  onSubCategoryFilterChange: PropTypes.func.isRequired, 
-};
