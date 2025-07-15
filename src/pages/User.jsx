@@ -134,7 +134,7 @@ export default function UserTable() {
         </Box>
 
         {/* DataGrid */}
-        <Box sx={{ height: "calc(100% - 80px)" }}>
+        <Box sx={{ height: "90%" }}>
           <DataGrid
             rows={users}
             columns={columns}

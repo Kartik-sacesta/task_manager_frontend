@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react"; // Import useState
 import { Link, useLocation } from "react-router-dom";
 import {
   Box,
@@ -14,6 +14,9 @@ import {
   Avatar,
   Stack,
   useTheme,
+  IconButton, // Import IconButton
+  Drawer, // Import Drawer
+  useMediaQuery, // Import useMediaQuery
 } from "@mui/material";
 import {
   Dashboard as DashboardIcon,
@@ -21,14 +24,20 @@ import {
   Task as TaskIcon,
   Logout as LogoutIcon,
   Notifications as NotificationsIcon,
+  Category as CategoryIcon, // Renamed from CategoryIcon for clarity
+  Menu as MenuIcon, // Icon for opening the sidebar
+  ChevronLeft as ChevronLeftIcon, // Icon for closing the sidebar
 } from "@mui/icons-material";
-import CategoryIcon from '@mui/icons-material/Category';
+
 const SIDEBAR_WIDTH = 280;
+const COLLAPSED_SIDEBAR_WIDTH = 70; // Width when sidebar is collapsed (icon only)
 
 const Sidebar = () => {
   const location = useLocation();
   const theme = useTheme();
   const userdata = JSON.parse(localStorage.getItem("userdata") || "{}");
+  const isMobile = useMediaQuery(theme.breakpoints.down("md")); // Check for mobile screens
+  const [open, setOpen] = useState(!isMobile); // State to manage sidebar open/close
 
   const menuItems = [
     {
@@ -43,7 +52,7 @@ const Sidebar = () => {
       icon: <PeopleIcon />,
       roles: ["Admin"],
     },
-     {
+    {
       path: "/category",
       label: "Category",
       icon: <CategoryIcon />,
@@ -94,43 +103,62 @@ const Sidebar = () => {
     }
   };
 
-  return (
+  const handleDrawerToggle = () => {
+    setOpen(!open);
+  };
+
+  // Content of the sidebar
+  const sidebarContent = (
     <Box
       sx={{
-        position: "fixed",
-        top: 0,
-        left: 0,
-        bottom: 0,
-        width: SIDEBAR_WIDTH,
+        width: open ? SIDEBAR_WIDTH : COLLAPSED_SIDEBAR_WIDTH,
         background: "linear-gradient(135deg, #050a2c, #0a1a4e)",
         color: "#f5f5f5",
         display: "flex",
         flexDirection: "column",
-        zIndex: 1000,
-        boxShadow: 2,
-        paddingBottom: 'env(safe-area-inset-bottom)',
+        height: "100%",
         boxSizing: "border-box",
-        borderRight: `1px solid ${theme.palette.divider}`,
+        transition: theme.transitions.create("width", {
+          easing: theme.transitions.easing.sharp,
+          duration: theme.transitions.duration.enteringScreen,
+        }),
+        overflowX: "hidden", // Hide horizontal scrollbar when collapsed
+        // Apply responsive styles for mobile
+        ...(isMobile && {
+          position: "fixed",
+          top: 0,
+          left: 0,
+          bottom: 0,
+          zIndex: 1000,
+          boxShadow: 2,
+          paddingBottom: "env(safe-area-inset-bottom)",
+          borderRight: `1px solid ${theme.palette.divider}`,
+        }),
       }}
     >
       <Box
         sx={{
           display: "flex",
           alignItems: "center",
-          justifyContent: "space-between",
+          justifyContent: open ? "space-between" : "center",
           p: 2,
-          
           color: "inherit",
-          minHeight: '64px',
-          gap: '0.75rem',
+          minHeight: "64px",
+          gap: "0.75rem",
         }}
       >
-        <Typography variant="h5" fontWeight="bold">
-          Taskbar
-        </Typography>
+        {open && (
+          <Typography variant="h5" fontWeight="bold">
+            Taskbar
+          </Typography>
+        )}
+        <IconButton onClick={handleDrawerToggle} sx={{ color: "inherit" }}>
+          {open ? <ChevronLeftIcon /> : <MenuIcon />}
+        </IconButton>
       </Box>
 
-      <Box sx={{ p: 2, color: "inherit" }}>
+      {open && (
+        <Box sx={{ p: 2, color: "inherit" }}>
           <Stack direction="row" spacing={2} alignItems="center">
             <Avatar
               sx={{
@@ -157,11 +185,12 @@ const Sidebar = () => {
               />
             </Box>
           </Stack>
-      </Box>
+        </Box>
+      )}
 
       <Divider />
 
-      <Box sx={{ flexGrow: 1, p: 1, overflowY: 'auto' }}>
+      <Box sx={{ flexGrow: 1, p: 1, overflowY: "auto" }}>
         <List>
           {filteredMenuItems.map((item) => (
             <ListItem key={item.path} disablePadding sx={{ mb: 0.5 }}>
@@ -169,12 +198,13 @@ const Sidebar = () => {
                 component={Link}
                 to={item.path}
                 selected={location.pathname === item.path}
+                onClick={isMobile && open ? handleDrawerToggle : null} // Close sidebar on item click for mobile
                 sx={{
                   borderRadius: 2,
-                  mx: 1,
+                  mx: open ? 1 : 0, // Adjust margin when collapsed
                   minHeight: 48,
-                  justifyContent: "initial",
-                  px: 2.5,
+                  justifyContent: open ? "initial" : "center", // Center icon when collapsed
+                  px: open ? 2.5 : 0, // Adjust padding when collapsed
                   "&.Mui-selected": {
                     backgroundColor: "rgba(255,255,255,0.2)",
                     color: "#ffffff",
@@ -188,7 +218,7 @@ const Sidebar = () => {
                   "&:hover": {
                     backgroundColor: "rgba(255,255,255,0.1)",
                   },
-                  transition: theme.transitions.create('background-color', {
+                  transition: theme.transitions.create("background-color", {
                     duration: theme.transitions.duration.shortest,
                   }),
                 }}
@@ -196,33 +226,33 @@ const Sidebar = () => {
                 <ListItemIcon
                   sx={{
                     minWidth: 0,
-                    mr: 3,
+                    mr: open ? 3 : "auto", // Adjust margin when collapsed
                     justifyContent: "center",
                     color:
-                      location.pathname === item.path
-                        ? "#ffffff"
-                        : "inherit",
-                    transition: theme.transitions.create('margin-right', {
+                      location.pathname === item.path ? "#ffffff" : "inherit",
+                    transition: theme.transitions.create("margin-right", {
                       duration: theme.transitions.duration.shortest,
                     }),
                   }}
                 >
                   {item.icon}
                 </ListItemIcon>
-                <ListItemText
-                  primary={item.label}
-                  primaryTypographyProps={{
-                    fontWeight:
-                      location.pathname === item.path ? "bold" : "normal",
-                  }}
-                  sx={{
-                      opacity: 1,
-                      transition: theme.transitions.create('opacity', {
-                          easing: theme.transitions.easing.sharp,
-                          duration: theme.transitions.duration.enteringScreen,
+                {open && (
+                  <ListItemText
+                    primary={item.label}
+                    primaryTypographyProps={{
+                      fontWeight:
+                        location.pathname === item.path ? "bold" : "normal",
+                    }}
+                    sx={{
+                      opacity: open ? 1 : 0, // Hide text when collapsed
+                      transition: theme.transitions.create("opacity", {
+                        easing: theme.transitions.easing.sharp,
+                        duration: theme.transitions.duration.enteringScreen,
                       }),
-                  }}
-                />
+                    }}
+                  />
+                )}
               </ListItemButton>
             </ListItem>
           ))}
@@ -243,21 +273,74 @@ const Sidebar = () => {
             py: 1.5,
             textTransform: "none",
             fontWeight: "bold",
-            justifyContent: "initial",
-            overflow: 'hidden',
+            justifyContent: open ? "initial" : "center", // Adjust justification when collapsed
+            overflow: "hidden",
             "&:hover": {
               backgroundColor: theme.palette.error.main,
               color: theme.palette.error.contrastText,
             },
-            transition: theme.transitions.create('background-color', {
+            transition: theme.transitions.create("background-color", {
               duration: theme.transitions.duration.shortest,
             }),
+            "& .MuiButton-startIcon": {
+              marginRight: open ? 8 : 0, // Adjust icon margin when collapsed
+            },
+            minWidth: open ? 'auto' : 0, // Allow button to shrink when collapsed
           }}
         >
-          Logout
+          {open && "Logout"}
         </Button>
       </Box>
     </Box>
+  );
+
+  return (
+    <>
+      {isMobile ? (
+        <Drawer
+          variant="temporary"
+          open={open}
+          onClose={handleDrawerToggle}
+          ModalProps={{
+            keepMounted: true, // Better open performance on mobile.
+          }}
+          sx={{
+            "& .MuiDrawer-paper": {
+              boxSizing: "border-box",
+              width: SIDEBAR_WIDTH,
+            },
+          }}
+        >
+          {sidebarContent}
+        </Drawer>
+      ) : (
+        // Desktop view: regular Box with collapsed state
+        <Box
+          sx={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            bottom: 0,
+            zIndex: 1000,
+            boxShadow: 2,
+            paddingBottom: "env(safe-area-inset-bottom)",
+            borderRight: `1px solid ${theme.palette.divider}`,
+            width: open ? SIDEBAR_WIDTH : COLLAPSED_SIDEBAR_WIDTH, // Apply width based on 'open' state
+            background: "linear-gradient(135deg, #050a2c, #0a1a4e)",
+            color: "#f5f5f5",
+            display: "flex",
+            flexDirection: "column",
+            transition: theme.transitions.create("width", {
+                easing: theme.transitions.easing.sharp,
+                duration: theme.transitions.duration.enteringScreen,
+            }),
+            overflowX: 'hidden', // Hide horizontal scrollbar when collapsed
+          }}
+        >
+          {sidebarContent}
+        </Box>
+      )}
+    </>
   );
 };
 
