@@ -22,9 +22,7 @@ import {
   Divider,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
-import AddIcon from "@mui/icons-material/Add";
-import DeleteIcon from "@mui/icons-material/Delete";
-import { alpha } from "@mui/material/styles";
+
 
 import { Editor } from "@tinymce/tinymce-react";
 
@@ -131,6 +129,7 @@ function CreateTaskModal({
   };
 
   const handleEditorChange = (content, editor) => {
+    console.log(editor);
     setFormData((prev) => ({
       ...prev,
       description: content,

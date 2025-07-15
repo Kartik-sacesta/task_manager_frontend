@@ -153,10 +153,10 @@ function DashboardPage() {
         </Typography>
       </Stack>
 
-      {isLoading && (<>
-      
-        <DashboardSkeleton/>
-      </>
+      {isLoading && (
+        <>
+          <DashboardSkeleton />
+        </>
       )}
 
       {hasError && !isLoading && (
