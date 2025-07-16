@@ -12,7 +12,6 @@ import {
   Navigate,
   Outlet,
 } from "react-router-dom";
-import { LoginLeftSideSkeleton } from "./skeleton/Loginskeleton";
 import Commonskeleton from "./skeleton/Commonskeleton";
 
 function App() {
@@ -56,6 +55,7 @@ function App() {
   return (
     <>
       <BrowserRouter>
+   
         {authorized ? (
           <>
             <Protectedroutes />

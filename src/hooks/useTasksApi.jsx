@@ -25,13 +25,17 @@ const useTasksApi = (showSnackbar) => {
         if (filter && filter.id) {
           url += `/search/${filter.id}`;
         }
-        console.log(url);
 
+        const queryParams = {
+          page: filter.page,
+          limit: filter.limit,
+        };
+        console.log(url);
         const response = await axios.get(url, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-          // params: queryParams,
+          params: queryParams,
         });
         console.log(response);
         if (response.status === 200) {

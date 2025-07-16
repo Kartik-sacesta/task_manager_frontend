@@ -163,13 +163,6 @@ function UserModal({
   );
 }
 
-UserModal.propTypes = {
-  open: PropTypes.bool.isRequired,
-  onClose: PropTypes.func.isRequired,
-  onSubmit: PropTypes.func.isRequired,
-  loading: PropTypes.bool.isRequired,
-  editMode: PropTypes.bool.isRequired,
-  initialData: PropTypes.object,
-};
+
 
 export default UserModal;

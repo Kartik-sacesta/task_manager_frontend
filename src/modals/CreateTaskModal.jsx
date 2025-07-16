@@ -15,17 +15,15 @@ import {
   FormControl,
   InputLabel,
   Select,
-  Toolbar,
   Typography,
-  Tooltip,
   Box,
   Divider,
+  Stepper,
+  Step,
+  StepLabel,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
-
-
 import { Editor } from "@tinymce/tinymce-react";
-
 import useCategoriesApi from "../hooks/useCategoriesApi";
 
 const statusOptions = [
@@ -41,6 +39,12 @@ const priorityOptions = [
   { value: "Urgent", label: "Urgent" },
 ];
 
+const steps = [
+  "Basic Information",
+  "Task Details",
+  "Category & Classification",
+];
+
 function CreateTaskModal({
   open,
   onClose,
@@ -49,6 +53,7 @@ function CreateTaskModal({
   edit,
   initialData,
 }) {
+  const [activeStep, setActiveStep] = React.useState(0);
   const [formData, setFormData] = React.useState({
     title: "",
     description: "",
@@ -67,6 +72,7 @@ function CreateTaskModal({
     if (open) {
       fetchCategories();
       fetchSubCategories();
+      setActiveStep(0);
     }
   }, [open, fetchCategories, fetchSubCategories]);
 
@@ -128,8 +134,7 @@ function CreateTaskModal({
     }
   };
 
-  const handleEditorChange = (content, editor) => {
-    console.log(editor);
+  const handleEditorChange = (content) => {
     setFormData((prev) => ({
       ...prev,
       description: content,
@@ -142,38 +147,59 @@ function CreateTaskModal({
     }
   };
 
-  const validateForm = () => {
+  const validateStep = (step) => {
     const newErrors = {};
+    let isValid = true;
 
-    if (!formData.title.trim()) {
-      newErrors.title = "Title is required";
+    switch (step) {
+      case 0:
+        if (!formData.title.trim()) {
+          newErrors.title = "Title is required";
+          isValid = false;
+        }
+
+        if (!formData.description.trim()) {
+          newErrors.description = "Description is required";
+          isValid = false;
+        }
+        break;
+      case 1:
+        if (!formData.expiredDate) {
+          newErrors.expiredDate = "Due date is required";
+          isValid = false;
+        } else {
+          const selectedDate = new Date(formData.expiredDate);
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+
+          if (selectedDate < today) {
+            newErrors.expiredDate = "Due date cannot be in the past";
+            isValid = false;
+          }
+        }
+        break;
+      case 2:
+        break;
+      default:
+        break;
     }
 
-    const strippedDescription = formData.description
-      .replace(/<[^>]*>/g, "")
-      .trim();
-    if (!strippedDescription) {
-      newErrors.description = "Description is required";
+    setErrors((prevErrors) => ({ ...prevErrors, ...newErrors }));
+    return isValid;
+  };
+
+  const handleNext = () => {
+    if (validateStep(activeStep)) {
+      setActiveStep((prevActiveStep) => prevActiveStep + 1);
     }
+  };
 
-    if (!formData.expiredDate) {
-      newErrors.expiredDate = "Expired date is required";
-    } else {
-      const selectedDate = new Date(formData.expiredDate);
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-
-      if (selectedDate < today) {
-        newErrors.expiredDate = "Expired date cannot be in the past";
-      }
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+  const handleBack = () => {
+    setActiveStep((prevActiveStep) => prevActiveStep - 1);
   };
 
   const handleSubmit = () => {
-    if (validateForm()) {
+    if (validateStep(activeStep)) {
       const submitData = {
         title: formData.title,
         description: formData.description,
@@ -203,6 +229,7 @@ function CreateTaskModal({
       subCategoryId: "",
     });
     setErrors({});
+    setActiveStep(0);
     onClose();
   };
 
@@ -212,56 +239,10 @@ function CreateTaskModal({
     (sub) => sub.category_id === formData.categoryId
   );
 
-  return (
-    <Dialog
-      open={open}
-      onClose={handleClose}
-      maxWidth="md"
-      fullWidth
-      sx={{
-        "& .MuiDialog-paper": {
-          position: "absolute",
-          right: 0,
-          margin: 0,
-          height: "100%",
-          maxHeight: "100%",
-          width: { xs: "100%", sm: "500px", md: "600px" },
-          borderRadius: 0,
-        },
-      }}
-    >
-      <DialogTitle
-        sx={{
-          bgcolor: "primary.main",
-          color: "white",
-          py: 2,
-        }}
-      >
-        <Stack
-          direction="row"
-          justifyContent="space-between"
-          alignItems="center"
-        >
-          <Typography variant="h6" component="div">
-            {edit ? "Edit Task" : "Create New Task"}
-          </Typography>
-          <IconButton
-            aria-label="close"
-            onClick={handleClose}
-            sx={{ color: "white" }}
-          >
-            <CloseIcon />
-          </IconButton>
-        </Stack>
-      </DialogTitle>
-
-      <DialogContent sx={{ p: 3 }}>
-        <Box sx={{ mt: 1 }}>
-          {/* Basic Information Section */}
-          <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 600 }}>
-            Basic Information
-          </Typography>
-
+  const getStepContent = (step) => {
+    switch (step) {
+      case 0:
+        return (
           <Grid container spacing={3}>
             <Grid item xs={12}>
               <TextField
@@ -276,7 +257,6 @@ function CreateTaskModal({
                 placeholder="Enter task title..."
               />
             </Grid>
-
             <Grid item xs={12}>
               <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 500 }}>
                 Description
@@ -324,13 +304,9 @@ function CreateTaskModal({
               )}
             </Grid>
           </Grid>
-
-          <Divider sx={{ my: 3 }} />
-
-          <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 600 }}>
-            Task Details
-          </Typography>
-
+        );
+      case 1:
+        return (
           <Grid container spacing={3}>
             <Grid item xs={12} sm={6}>
               <TextField
@@ -351,7 +327,6 @@ function CreateTaskModal({
                 variant="outlined"
               />
             </Grid>
-
             <Grid item xs={12} sm={6}>
               <FormControl fullWidth variant="outlined">
                 <InputLabel>Status</InputLabel>
@@ -369,7 +344,6 @@ function CreateTaskModal({
                 </Select>
               </FormControl>
             </Grid>
-
             <Grid item xs={12} sm={6}>
               <FormControl fullWidth variant="outlined">
                 <InputLabel>Priority</InputLabel>
@@ -388,23 +362,22 @@ function CreateTaskModal({
               </FormControl>
             </Grid>
           </Grid>
-
-          <Divider sx={{ my: 3 }} />
-
-          <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 600 }}>
-            Category & Classification
-          </Typography>
-
-          <Grid spacing={3}>
+        );
+      case 2:
+        return (
+          <Grid container spacing={3}>
             <Grid item xs={12} sm={6}>
               <FormControl fullWidth variant="outlined">
-                <InputLabel>Category</InputLabel>
                 <Select
                   value={formData.categoryId}
                   onChange={handleChange("categoryId")}
                   disabled={loading}
                   label="Category"
+                  displayEmpty
                 >
+                  <MenuItem value="">
+                    <em>None</em>
+                  </MenuItem>
                   {categories.map((category) => (
                     <MenuItem key={category.id} value={category.id}>
                       {category.name}
@@ -413,18 +386,17 @@ function CreateTaskModal({
                 </Select>
               </FormControl>
             </Grid>
-
             <Grid item xs={12} sm={6}>
-              <FormControl fullWidth displayEmpty variant="outlined">
-                <InputLabel>SubCategory</InputLabel>
+              <FormControl fullWidth variant="outlined">
                 <Select
                   value={formData.subCategoryId}
                   onChange={handleChange("subCategoryId")}
                   disabled={loading || !formData.categoryId}
                   label="SubCategory"
+                  displayEmpty
                 >
                   <MenuItem value="">
-                    <em>Select SubCategory</em>
+                    <em>None</em>
                   </MenuItem>
                   {filteredSubCategories.map((subCategory) => (
                     <MenuItem key={subCategory.id} value={subCategory.id}>
@@ -435,47 +407,110 @@ function CreateTaskModal({
               </FormControl>
             </Grid>
           </Grid>
-        </Box>
+        );
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <Dialog
+      open={open}
+      onClose={handleClose}
+      maxWidth="md"
+      fullWidth
+      sx={{
+        "& .MuiDialog-paper": {
+          position: "absolute",
+          right: 0,
+          margin: 0,
+          height: "100%",
+          maxHeight: "100%",
+          width: { xs: "100%", sm: "500px", md: "600px" },
+          borderRadius: 0,
+        },
+      }}
+    >
+      <DialogTitle
+        sx={{
+          bgcolor: "primary.main",
+          color: "white",
+          py: 2,
+        }}
+      >
+        <Stack
+          direction="row"
+          justifyContent="space-between"
+          alignItems="center"
+        >
+          <Typography variant="h6" component="div">
+            {edit ? "Edit Task" : "Create New Task"}
+          </Typography>
+          <IconButton
+            aria-label="close"
+            onClick={handleClose}
+            sx={{ color: "white" }}
+          >
+            <CloseIcon />
+          </IconButton>
+        </Stack>
+      </DialogTitle>
+
+      <DialogContent sx={{ p: 3 }}>
+        <Stepper activeStep={activeStep} alternativeLabel sx={{ mb: 3 }}>
+          {steps.map((label) => (
+            <Step key={label}>
+              <StepLabel>{label}</StepLabel>
+            </Step>
+          ))}
+        </Stepper>
+
+        <Box sx={{ mt: 1 }}>{getStepContent(activeStep)}</Box>
       </DialogContent>
 
       <DialogActions sx={{ p: 3, bgcolor: "grey.50" }}>
-        <Button
-          onClick={handleClose}
-          disabled={loading}
-          variant="outlined"
-          sx={{ minWidth: 100 }}
-        >
-          Cancel
-        </Button>
-        <Button
-          onClick={handleSubmit}
-          variant="contained"
-          disabled={loading}
-          startIcon={
-            loading ? <CircularProgress size={16} color="inherit" /> : null
-          }
-          sx={{ minWidth: 120 }}
-        >
-          {loading
-            ? edit
-              ? "Saving..."
-              : "Creating..."
-            : edit
-              ? "Save Changes"
-              : "Create Task"}
-        </Button>
+        {activeStep !== 0 && (
+          <Button
+            onClick={handleBack}
+            disabled={loading}
+            variant="outlined"
+            sx={{ minWidth: 100 }}
+          >
+            Back
+          </Button>
+        )}
+        <Box sx={{ flex: "1 1 auto" }} />
+        {activeStep === steps.length - 1 ? (
+          <Button
+            onClick={handleSubmit}
+            variant="contained"
+            disabled={loading}
+            startIcon={
+              loading ? <CircularProgress size={16} color="inherit" /> : null
+            }
+            sx={{ minWidth: 120 }}
+          >
+            {loading
+              ? edit
+                ? "Saving..."
+                : "Creating..."
+              : edit
+                ? "Save Changes"
+                : "Create Task"}
+          </Button>
+        ) : (
+          <Button
+            onClick={handleNext}
+            variant="contained"
+            disabled={loading}
+            sx={{ minWidth: 100 }}
+          >
+            Next
+          </Button>
+        )}
       </DialogActions>
     </Dialog>
   );
 }
-
-CreateTaskModal.propTypes = {
-  open: PropTypes.bool.isRequired,
-  onClose: PropTypes.func.isRequired,
-  onSubmit: PropTypes.func.isRequired,
-  loading: PropTypes.bool.isRequired,
-  edit: PropTypes.bool.isRequired,
-  initialData: PropTypes.object,
-};
 
 export default CreateTaskModal;

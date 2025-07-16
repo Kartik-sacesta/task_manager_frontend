@@ -2,24 +2,13 @@ import React, { useState, useEffect } from "react";
 import {
   Box,
   Button,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
   Typography,
-  Switch,
-  FormControlLabel,
   Tabs,
   Tab,
   Alert,
   Snackbar,
   Chip,
-  Select,
   MenuItem,
-  FormControl,
-  InputLabel,
-  Grid,
   Card,
   CardContent,
   CardHeader,
@@ -120,25 +109,6 @@ const Categorypage = () => {
     }
   };
 
-  const handleToggleCategoryStatus = async (categoryId) => {
-    try {
-      const categoryToUpdate = categories.find((cat) => cat.id === categoryId);
-      if (categoryToUpdate) {
-        const updatedData = {
-          ...categoryToUpdate,
-          is_active: !categoryToUpdate.is_active,
-        };
-        await updateCategory(categoryId, updatedData);
-        showNotification("Category status updated successfully");
-      }
-    } catch (err) {
-      showNotification(
-        `Failed to update category status: ${err.message}`,
-        "error"
-      );
-    }
-  };
-
   const handleCreateSubCategory = async (subCategoryData) => {
     try {
       await createSubCategory(subCategoryData);
@@ -233,11 +203,6 @@ const Categorypage = () => {
     handleCategoryMenuClose();
   };
 
-  const handleCategoryToggleStatusClick = () => {
-    handleToggleCategoryStatus(selectedCategoryRow.id);
-    handleCategoryMenuClose();
-  };
-
   const handleCategoryDeleteClick = () => {
     handleDeleteCategory(selectedCategoryRow.id);
     handleCategoryMenuClose();
@@ -328,14 +293,7 @@ const Categorypage = () => {
             <MenuItem onClick={handleCategoryEditClick}>
               <EditIcon sx={{ mr: 1 }} /> Edit
             </MenuItem>
-            <MenuItem onClick={handleCategoryToggleStatusClick}>
-              {selectedCategoryRow?.is_active ? (
-                <VisibilityOffIcon sx={{ mr: 1 }} />
-              ) : (
-                <ViewIcon sx={{ mr: 1 }} />
-              )}
-              {selectedCategoryRow?.is_active ? "Deactivate" : "Activate"}
-            </MenuItem>
+
             <MenuItem onClick={handleCategoryDeleteClick}>
               <DeleteIcon sx={{ mr: 1 }} /> Delete
             </MenuItem>
@@ -562,9 +520,5 @@ const Categorypage = () => {
     </Box>
   );
 };
-
-
-
-
 
 export default Categorypage;

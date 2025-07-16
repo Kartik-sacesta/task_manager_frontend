@@ -1,8 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 
-
-
 export const useUserData = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -27,22 +25,27 @@ export const useUserData = () => {
     setSnackbar((prev) => ({ ...prev, open: false }));
   };
 
-  const fetchUsers = useCallback(async () => {
+  const fetchUsers = useCallback(async (page, limit) => {
     setLoading(true);
     try {
       const token = getAuthToken();
-      const response = await fetch(`${import.meta.env.VITE_REACT_APP_BACKEND_URL}/user`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const queryParams = { page, limit };
+      const response = await axios.get(
+        `${import.meta.env.VITE_REACT_APP_BACKEND_URL}/user`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          params: queryParams,
+        }
+      );
+      console.log(response)
 
-      if (response.ok) {
-        const data = await response.json();
-        setUsers(Array.isArray(data) ? data : []);
-      } else {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
+       if (response.status === 200) {
+          setUsers(Array.isArray(response.data) ? response.data : []);
+        } else {
+          throw new Error("Failed to fetch tasks");
+        }
     } catch (error) {
       console.error("Error fetching users:", error);
       showSnackbar("Failed to fetch users", "error");
@@ -56,12 +59,16 @@ export const useUserData = () => {
     setCreateLoading(true);
     try {
       const token = getAuthToken();
-      const response = await axios.post(`${import.meta.env.VITE_REACT_APP_BACKEND_URL}/user`, userData, {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const response = await axios.post(
+        `${import.meta.env.VITE_REACT_APP_BACKEND_URL}/user`,
+        userData,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
       if (response.status === 200 || response.status === 201) {
         showSnackbar("User created successfully!");
@@ -127,11 +134,14 @@ export const useUserData = () => {
 
     try {
       const token = getAuthToken();
-      const response = await axios.delete(`${import.meta.env.VITE_REACT_APP_BACKEND_URL}/user/${userId}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const response = await axios.delete(
+        `${import.meta.env.VITE_REACT_APP_BACKEND_URL}/user/${userId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
       if (response.status === 200) {
         showSnackbar("User deleted successfully!");

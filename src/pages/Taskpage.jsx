@@ -1,5 +1,4 @@
 import React from "react";
-import PropTypes from "prop-types";
 import Box from "@mui/material/Box";
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
@@ -33,6 +32,8 @@ import useTasksApi from "../hooks/useTasksApi";
 import useCategoriesApi from "../hooks/useCategoriesApi";
 import EnhancedTableToolbar from "../components/EnhancedTableToolbar";
 import { Tableskeleton } from "../skeleton/Tableskeleton";
+import Pagination from "@mui/material/Pagination";
+import Select from "@mui/material/Select";
 const headCells = [
   {
     id: "title",
@@ -65,8 +66,6 @@ const headCells = [
     label: "Actions",
   },
 ];
-
-
 
 function descendingComparator(a, b, orderBy) {
   if (b[orderBy] < a[orderBy]) {
@@ -126,20 +125,11 @@ function EnhancedTableHead(props) {
   );
 }
 
-EnhancedTableHead.propTypes = {
-  numSelected: PropTypes.number.isRequired,
-  onRequestSort: PropTypes.func.isRequired,
-  onSelectAllClick: PropTypes.func.isRequired,
-  order: PropTypes.oneOf(["asc", "desc"]).isRequired,
-  orderBy: PropTypes.string.isRequired,
-  rowCount: PropTypes.number.isRequired,
-};
-
-export default function EnhancedTable() {
+export default function Taskpage() {
   const [order, setOrder] = React.useState("asc");
   const [orderBy, setOrderBy] = React.useState("title");
   const [selected, setSelected] = React.useState([]);
-  const [page, setPage] = React.useState(0);
+  const [page, setPage] = React.useState(1);
   const [rowsPerPage, setRowsPerPage] = React.useState(5);
 
   const [anchorEl, setAnchorEl] = React.useState(null);
@@ -155,7 +145,7 @@ export default function EnhancedTable() {
     severity: "success",
   });
   const [confirmDialogOpen, setConfirmDialogOpen] = React.useState(false);
-  const [priorityFilter, setPriorityFilter] = React.useState("All");
+  const [priorityFilter, setPriorityFilter] = React.useState([]);
 
   const [taskTitleSearchTerm, setTaskTitleSearchTerm] = React.useState("");
   const [subCategorySearchTerm, setSubCategorySearchTerm] = React.useState("");
@@ -216,11 +206,10 @@ export default function EnhancedTable() {
   }, [fetchCategories, fetchSubCategories]);
 
   React.useEffect(() => {
-    const filters = {};
-    if (priorityFilter !== "All") {
-      filters.priority = priorityFilter;
-    }
-
+    const filters = {
+      page: page,
+      limit: rowsPerPage,
+    };
     if (selectedSubCategoryId) {
       filters.sub_category_id = selectedSubCategoryId;
     }
@@ -232,9 +221,10 @@ export default function EnhancedTable() {
     fetchTasks(filters);
   }, [
     fetchTasks,
-    priorityFilter,
     selectedSubCategoryId,
-    selectedTaskTitleId, // Add selectedTaskTitleId to dependencies
+    selectedTaskTitleId,
+    page,
+    rowsPerPage,
   ]);
 
   const handleDeleteSelected = async () => {
@@ -261,13 +251,12 @@ export default function EnhancedTable() {
 
   const handleSelectAllClick = (event) => {
     if (event.target.checked) {
-      const newSelected = filteredRows.map((n) => n.id);
+      const newSelected = visibleRows.map((n) => n.id);
       setSelected(newSelected);
       return;
     }
     setSelected([]);
   };
-
   const handleClick = (event, id) => {
     const selectedIndex = selected.indexOf(id);
     let newSelected = [];
@@ -293,7 +282,7 @@ export default function EnhancedTable() {
 
   const handleChangeRowsPerPage = (event) => {
     setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0);
+    setPage(1);
   };
 
   const getStatusColor = (status) => {
@@ -323,10 +312,12 @@ export default function EnhancedTable() {
     }
   };
 
-  const handlePriorityFilterChange = (event) => {
-    setPriorityFilter(event.target.value);
-    setPage(0);
+  const handlePriorityFilterChange = (newvalue) => {
+    const priorityArray = Array.isArray(newvalue) ? newvalue : [newvalue];
+    setPriorityFilter(priorityArray);
+    setPage(1);
   };
+  console.log("priority", priorityFilter);
 
   const handleTaskTitleSearchChange = (value) => {
     console.log(value.id);
@@ -341,7 +332,7 @@ export default function EnhancedTable() {
       setTaskTitleSearchTerm("");
       setSelectedTaskTitleId(null);
     }
-    setPage(0);
+    setPage(1);
   };
 
   const handleSubCategorySearchChange = (value) => {
@@ -356,21 +347,21 @@ export default function EnhancedTable() {
       setSubCategorySearchTerm("");
       setSelectedSubCategoryId(null);
     }
-    setPage(0);
+    setPage(1);
   };
 
   const filteredRows = React.useMemo(() => {
     const tasksArray = Array.isArray(tasks) ? tasks : [];
     let currentFilteredTasks = [...tasksArray];
 
-    if (priorityFilter !== "All") {
-      currentFilteredTasks = currentFilteredTasks.filter(
-        (row) => row.priority === priorityFilter
+    if (priorityFilter && priorityFilter.length > 0) {
+      currentFilteredTasks = currentFilteredTasks.filter((task) =>
+        priorityFilter.includes(task.priority?.toLowerCase())
       );
+
+      console.log("curr", currentFilteredTasks);
     }
 
-    // Client-side task title filter: Only apply if no specific task ID is selected
-    // because the API call already filters by selectedTaskTitleId.
     if (!selectedTaskTitleId && taskTitleSearchTerm) {
       const lowerCaseSearchTerm = String(taskTitleSearchTerm).toLowerCase();
       currentFilteredTasks = currentFilteredTasks.filter(
@@ -384,8 +375,6 @@ export default function EnhancedTable() {
       );
     }
 
-    // Client-side subcategory filter: Only apply if no specific subCategory ID is selected
-    // because the API call already filters by selectedSubCategoryId.
     if (!selectedSubCategoryId && subCategorySearchTerm) {
       const lowerCaseSearchTerm = String(subCategorySearchTerm).toLowerCase();
       currentFilteredTasks = currentFilteredTasks.filter(
@@ -408,16 +397,9 @@ export default function EnhancedTable() {
     selectedSubCategoryId,
   ]);
 
-  const emptyRows =
-    page > 0 ? Math.max(0, (1 + page) * rowsPerPage - filteredRows.length) : 0;
-
-  const visibleRows = React.useMemo(
-    () =>
-      [...filteredRows]
-        .sort(getComparator(order, orderBy))
-        .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage),
-    [filteredRows, order, orderBy, page, rowsPerPage]
-  );
+  const visibleRows = React.useMemo(() => {
+    return [...filteredRows].sort(getComparator(order, orderBy));
+  }, [filteredRows, order, orderBy]);
 
   const handleOpenEditModal = (row) => {
     setEditTaskId(row.id);
@@ -462,7 +444,6 @@ export default function EnhancedTable() {
     <Box sx={{ width: "100%" }}>
       <Paper sx={{ width: "100%", mb: 2 }}>
         <EnhancedTableToolbar
-        
           onCreateTask={() => {
             setEdit(false);
             setEditTaskId(null);
@@ -480,7 +461,7 @@ export default function EnhancedTable() {
           subCategorySearchTerm={subCategorySearchTerm}
           onSubCategorySearchChange={handleSubCategorySearchChange}
           tasks={tasks}
-        />
+        />{" "}
         <TableContainer>
           <Table
             sx={{ minWidth: 750 }}
@@ -498,8 +479,8 @@ export default function EnhancedTable() {
             <TableBody>
               {tasksLoading || categoriesLoading || subCategoriesLoading ? (
                 <TableRow>
-                  <TableCell  align="center">
-                    <Tableskeleton/>
+                  <TableCell align="center">
+                    <Tableskeleton />
                   </TableCell>
                 </TableRow>
               ) : visibleRows.length === 0 ? (
@@ -510,17 +491,14 @@ export default function EnhancedTable() {
                 </TableRow>
               ) : (
                 visibleRows.map((row, index) => {
-
                   const labelId = `enhanced-table-checkbox-${index}`;
 
                   return (
                     <TableRow
                       hover
                       role="checkbox"
-                     
                       tabIndex={-1}
                       key={row.id}
-                    
                       sx={{ cursor: "pointer" }}
                     >
                       <TableCell padding="checkbox"></TableCell>
@@ -648,25 +626,18 @@ export default function EnhancedTable() {
                   );
                 })
               )}
-              {emptyRows > 0 && !tasksLoading && (
-                <TableRow
-                  style={{
-                    height: 53 * emptyRows,
-                  }}
-                >
-                  <TableCell colSpan={8} />
-                </TableRow>
-              )}
             </TableBody>
           </Table>
         </TableContainer>
         <TablePagination
-          rowsPerPageOptions={[5, 10, 25]}
+          rowsPerPageOptions={[5, 10, 25, 50]}
           component="div"
-          count={filteredRows.length}
+          count={tasks.length}
           rowsPerPage={rowsPerPage}
-          page={page}
-          onPageChange={handleChangePage}
+          page={page - 1}
+          onPageChange={(event, newPage) =>
+            handleChangePage(event, newPage + 1)
+          }
           onRowsPerPageChange={handleChangeRowsPerPage}
         />
       </Paper>

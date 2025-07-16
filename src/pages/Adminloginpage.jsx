@@ -22,13 +22,9 @@ import "react-toastify/dist/ReactToastify.css";
 
 import { signInWithPopup } from "firebase/auth";
 import { auth, googleProvider } from "../firebaseConfig";
-import {
-  LoginFormSkeleton,
-  LoginLeftSideSkeleton,
-  LoginPageSkeleton,
-} from "../skeleton/Loginskeleton";
+import { LoginFormSkeleton,LoginLeftSideSkeleton, LoginPageSkeleton } from "../skeleton/Loginskeleton";
 
-export default function LoginPage() {
+export default function Adminloginpage() {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setemail] = useState("");
   const [password, setpassword] = useState("");
@@ -37,7 +33,7 @@ export default function LoginPage() {
 
   const [pageLoading, setPageLoading] = useState(true);
 
-
+  // Simulate page loading
   React.useEffect(() => {
     const timer = setTimeout(() => {
       setPageLoading(false);
@@ -56,7 +52,8 @@ export default function LoginPage() {
 
     setLoading(true);
     try {
-      const endpoint = `${import.meta.env.VITE_REACT_APP_BACKEND_URL}/user/login`;
+      const endpoint =`${import.meta.env.VITE_REACT_APP_BACKEND_URL}/user/adminlogin`
+     
 
       const res = await axios.post(endpoint, {
         email,
@@ -118,6 +115,8 @@ export default function LoginPage() {
     }
   };
 
+  
+
   return (
     <Box
       sx={{
@@ -151,7 +150,7 @@ export default function LoginPage() {
               sx={{ fontSize: "2.5rem", lineHeight: 1.2 }}
               className="title"
             >
-              Sign In User
+              Sign In Admin
             </Typography>
             <Typography
               variant="body1"
@@ -178,7 +177,7 @@ export default function LoginPage() {
         className="form-area"
       >
         {pageLoading ? (
-          <LoginFormSkeleton />
+          <LoginFormSkeleton/>
         ) : (
           <Box
             sx={{
@@ -298,6 +297,7 @@ export default function LoginPage() {
               alignItems="center"
               my={1}
             >
+            
               <Link
                 href="#"
                 variant="body2"
@@ -365,8 +365,7 @@ export default function LoginPage() {
                 fontWeight: 500,
                 borderRadius: "0.375rem",
                 cursor: "pointer",
-                transition:
-                  "background-color 0.2s ease, border-color 0.2s ease",
+                transition: "background-color 0.2s ease, border-color 0.2s ease",
                 "&:hover": {
                   backgroundColor: "#f3f4f6",
                   borderColor: "#9ca3af",

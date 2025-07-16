@@ -15,7 +15,6 @@ import {
   MenuItem,
 } from "@mui/material";
 
-
 const SubCategoryDialog = ({
   open,
   mode,

@@ -42,13 +42,6 @@ function ConfirmationDialog({
   );
 }
 
-ConfirmationDialog.propTypes = {
-  open: PropTypes.bool.isRequired,
-  title: PropTypes.string.isRequired,
-  message: PropTypes.string.isRequired,
-  onConfirm: PropTypes.func.isRequired,
-  onCancel: PropTypes.func.isRequired,
-  loading: PropTypes.bool.isRequired,
-};
+
 
 export default ConfirmationDialog;

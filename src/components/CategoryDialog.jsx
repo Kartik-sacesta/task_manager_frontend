@@ -11,7 +11,6 @@ import {
   Switch,
 } from "@mui/material";
 
-
 const CategoryDialog = ({ open, mode, data, onClose, onSave }) => {
   const [formData, setFormData] = useState({
     name: "",
@@ -107,6 +106,5 @@ const CategoryDialog = ({ open, mode, data, onClose, onSave }) => {
     </Dialog>
   );
 };
-
 
 export default CategoryDialog;

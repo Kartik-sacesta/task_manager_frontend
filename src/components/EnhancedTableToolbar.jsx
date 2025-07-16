@@ -12,22 +12,24 @@ import FormControl from "@mui/material/FormControl";
 import InputLabel from "@mui/material/InputLabel";
 import Select from "@mui/material/Select";
 import MenuItem from "@mui/material/MenuItem";
+import Checkbox from "@mui/material/Checkbox";
+import ListItemText from "@mui/material/ListItemText";
+import Chip from "@mui/material/Chip";
+import Box from "@mui/material/Box";
 import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
 
-// Define priority options, as they are used directly within this component.
 const priorityOptions = [
-  { value: "all", label: "All" },
   { value: "high", label: "High" },
   { value: "medium", label: "Medium" },
   { value: "low", label: "Low" },
+  { value: "urgent", label: "Urgent" },
 ];
 
 function EnhancedTableToolbar(props) {
   const {
     numSelected,
     onCreateTask,
-
     priorityFilter,
     onPriorityFilterChange,
     subCategories,
@@ -53,6 +55,38 @@ function EnhancedTableToolbar(props) {
         }))
       : [];
   }, [subCategories]);
+
+  const handlePriorityChange = (event) => {
+    const value = event.target.value;
+    const newValue = typeof value === "string" ? value.split(",") : value;
+    onPriorityFilterChange(newValue);
+  };
+
+  const renderSelectedValues = (selected) => {
+    if (!selected || selected.length === 0) {
+      return <em>All Priorities</em>;
+    }
+
+    if (selected.length === priorityOptions.length) {
+      return <em>All Priorities</em>;
+    }
+
+    return (
+      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+        {selected.map((value) => {
+          const option = priorityOptions.find((opt) => opt.value === value);
+          return (
+            <Chip
+              key={value}
+              label={option?.label || value}
+              size="small"
+              variant="outlined"
+            />
+          );
+        })}
+      </Box>
+    );
+  };
 
   return (
     <Toolbar
@@ -90,7 +124,6 @@ function EnhancedTableToolbar(props) {
         </Typography>
       )}
 
-      {/* Task Title Search Input */}
       <Autocomplete
         freeSolo
         disablePortal
@@ -99,7 +132,7 @@ function EnhancedTableToolbar(props) {
         getOptionLabel={(option) =>
           typeof option === "string" ? option : option.name
         }
-        value={null} // Always null for freeSolo mode to allow typing
+        value={null}
         onChange={(event, newValue) => {
           onTaskTitleSearchChange(newValue);
         }}
@@ -125,7 +158,6 @@ function EnhancedTableToolbar(props) {
         )}
       />
 
-      {/* SubCategory Search Input */}
       <Autocomplete
         freeSolo
         disablePortal
@@ -134,7 +166,7 @@ function EnhancedTableToolbar(props) {
         getOptionLabel={(option) =>
           typeof option === "string" ? option : option.name
         }
-        value={null} // Always null for freeSolo mode
+        value={null}
         onChange={(event, newValue) => {
           onSubCategorySearchChange(newValue);
         }}
@@ -165,13 +197,23 @@ function EnhancedTableToolbar(props) {
         <Select
           labelId="priority-filter-label"
           id="priority-filter-select"
-          value={priorityFilter}
+          value={priorityFilter || []}
           label="Priority"
-          onChange={onPriorityFilterChange}
+          onChange={handlePriorityChange}
+          multiple
+          renderValue={renderSelectedValues}
+          MenuProps={{
+            PaperProps: {
+              style: {
+                maxHeight: 48 * 4.5 + 8,
+                width: 250,
+              },
+            },
+          }}
         >
           {priorityOptions.map((option) => (
             <MenuItem key={option.value} value={option.value}>
-              {option.label}
+              <ListItemText primary={option.label} />
             </MenuItem>
           ))}
         </Select>
@@ -191,20 +233,5 @@ function EnhancedTableToolbar(props) {
     </Toolbar>
   );
 }
-
-EnhancedTableToolbar.propTypes = {
-  numSelected: PropTypes.number.isRequired,
-  onCreateTask: PropTypes.func.isRequired,
-
-  priorityFilter: PropTypes.string.isRequired,
-  onPriorityFilterChange: PropTypes.func.isRequired,
-
-  subCategories: PropTypes.array.isRequired,
-  taskTitleSearchTerm: PropTypes.string.isRequired,
-  onTaskTitleSearchChange: PropTypes.func.isRequired,
-  subCategorySearchTerm: PropTypes.string.isRequired,
-  onSubCategorySearchChange: PropTypes.func.isRequired,
-  tasks: PropTypes.array.isRequired,
-};
 
 export default EnhancedTableToolbar;

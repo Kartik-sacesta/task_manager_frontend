@@ -1,4 +1,4 @@
-import React, { useState } from "react"; // Import useState
+import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
   Box,
@@ -14,9 +14,9 @@ import {
   Avatar,
   Stack,
   useTheme,
-  IconButton, // Import IconButton
-  Drawer, // Import Drawer
-  useMediaQuery, // Import useMediaQuery
+  IconButton,
+  Drawer,
+  useMediaQuery,
 } from "@mui/material";
 import {
   Dashboard as DashboardIcon,
@@ -24,20 +24,20 @@ import {
   Task as TaskIcon,
   Logout as LogoutIcon,
   Notifications as NotificationsIcon,
-  Category as CategoryIcon, // Renamed from CategoryIcon for clarity
-  Menu as MenuIcon, // Icon for opening the sidebar
-  ChevronLeft as ChevronLeftIcon, // Icon for closing the sidebar
+  Category as CategoryIcon,
+  Menu as MenuIcon,
+  ChevronLeft as ChevronLeftIcon,
 } from "@mui/icons-material";
 
 const SIDEBAR_WIDTH = 280;
-const COLLAPSED_SIDEBAR_WIDTH = 70; // Width when sidebar is collapsed (icon only)
+const COLLAPSED_SIDEBAR_WIDTH = 70;
 
 const Sidebar = () => {
   const location = useLocation();
   const theme = useTheme();
   const userdata = JSON.parse(localStorage.getItem("userdata") || "{}");
-  const isMobile = useMediaQuery(theme.breakpoints.down("md")); // Check for mobile screens
-  const [open, setOpen] = useState(!isMobile); // State to manage sidebar open/close
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+  const [open, setOpen] = useState(!isMobile);
 
   const menuItems = [
     {
@@ -107,7 +107,6 @@ const Sidebar = () => {
     setOpen(!open);
   };
 
-  // Content of the sidebar
   const sidebarContent = (
     <Box
       sx={{
@@ -122,8 +121,8 @@ const Sidebar = () => {
           easing: theme.transitions.easing.sharp,
           duration: theme.transitions.duration.enteringScreen,
         }),
-        overflowX: "hidden", // Hide horizontal scrollbar when collapsed
-        // Apply responsive styles for mobile
+        overflowX: "hidden",
+
         ...(isMobile && {
           position: "fixed",
           top: 0,
@@ -198,13 +197,13 @@ const Sidebar = () => {
                 component={Link}
                 to={item.path}
                 selected={location.pathname === item.path}
-                onClick={isMobile && open ? handleDrawerToggle : null} // Close sidebar on item click for mobile
+                onClick={isMobile && open ? handleDrawerToggle : null}
                 sx={{
                   borderRadius: 2,
-                  mx: open ? 1 : 0, // Adjust margin when collapsed
+                  mx: open ? 1 : 0,
                   minHeight: 48,
-                  justifyContent: open ? "initial" : "center", // Center icon when collapsed
-                  px: open ? 2.5 : 0, // Adjust padding when collapsed
+                  justifyContent: open ? "initial" : "center",
+                  px: open ? 2.5 : 0,
                   "&.Mui-selected": {
                     backgroundColor: "rgba(255,255,255,0.2)",
                     color: "#ffffff",
@@ -226,7 +225,7 @@ const Sidebar = () => {
                 <ListItemIcon
                   sx={{
                     minWidth: 0,
-                    mr: open ? 3 : "auto", // Adjust margin when collapsed
+                    mr: open ? 3 : "auto",
                     justifyContent: "center",
                     color:
                       location.pathname === item.path ? "#ffffff" : "inherit",
@@ -245,7 +244,7 @@ const Sidebar = () => {
                         location.pathname === item.path ? "bold" : "normal",
                     }}
                     sx={{
-                      opacity: open ? 1 : 0, // Hide text when collapsed
+                      opacity: open ? 1 : 0,
                       transition: theme.transitions.create("opacity", {
                         easing: theme.transitions.easing.sharp,
                         duration: theme.transitions.duration.enteringScreen,
@@ -273,7 +272,7 @@ const Sidebar = () => {
             py: 1.5,
             textTransform: "none",
             fontWeight: "bold",
-            justifyContent: open ? "initial" : "center", // Adjust justification when collapsed
+            justifyContent: open ? "initial" : "center",
             overflow: "hidden",
             "&:hover": {
               backgroundColor: theme.palette.error.main,
@@ -283,9 +282,9 @@ const Sidebar = () => {
               duration: theme.transitions.duration.shortest,
             }),
             "& .MuiButton-startIcon": {
-              marginRight: open ? 8 : 0, // Adjust icon margin when collapsed
+              marginRight: open ? 8 : 0,
             },
-            minWidth: open ? 'auto' : 0, // Allow button to shrink when collapsed
+            minWidth: open ? "auto" : 0,
           }}
         >
           {open && "Logout"}
@@ -302,7 +301,7 @@ const Sidebar = () => {
           open={open}
           onClose={handleDrawerToggle}
           ModalProps={{
-            keepMounted: true, // Better open performance on mobile.
+            keepMounted: true,
           }}
           sx={{
             "& .MuiDrawer-paper": {
@@ -314,7 +313,6 @@ const Sidebar = () => {
           {sidebarContent}
         </Drawer>
       ) : (
-        // Desktop view: regular Box with collapsed state
         <Box
           sx={{
             position: "fixed",
@@ -325,16 +323,16 @@ const Sidebar = () => {
             boxShadow: 2,
             paddingBottom: "env(safe-area-inset-bottom)",
             borderRight: `1px solid ${theme.palette.divider}`,
-            width: open ? SIDEBAR_WIDTH : COLLAPSED_SIDEBAR_WIDTH, // Apply width based on 'open' state
+            width: open ? SIDEBAR_WIDTH : COLLAPSED_SIDEBAR_WIDTH,
             background: "linear-gradient(135deg, #050a2c, #0a1a4e)",
             color: "#f5f5f5",
             display: "flex",
             flexDirection: "column",
             transition: theme.transitions.create("width", {
-                easing: theme.transitions.easing.sharp,
-                duration: theme.transitions.duration.enteringScreen,
+              easing: theme.transitions.easing.sharp,
+              duration: theme.transitions.duration.enteringScreen,
             }),
-            overflowX: 'hidden', // Hide horizontal scrollbar when collapsed
+            overflowX: "hidden",
           }}
         >
           {sidebarContent}

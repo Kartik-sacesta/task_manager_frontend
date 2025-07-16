@@ -119,10 +119,6 @@ function ActionMenu({ onEdit, onDelete }) {
   );
 }
 
-ActionMenu.propTypes = {
-  user: PropTypes.object.isRequired,
-  onEdit: PropTypes.func.isRequired,
-  onDelete: PropTypes.func.isRequired,
-};
+
 
 export default ActionMenu;

@@ -86,10 +86,8 @@ const ActionsCell = React.memo(({ task, onMenuClick }) => (
   </Tooltip>
 ));
 
-
 // Helper component for displaying individual analytics metrics
 const AnalyticsMetric = ({ label, value, color, icon: IconComponent }) => (
-  
   <Stack
     direction="row"
     alignItems="center"
@@ -97,18 +95,38 @@ const AnalyticsMetric = ({ label, value, color, icon: IconComponent }) => (
     sx={{
       p: 1.5,
       borderRadius: 1,
-      backgroundColor: (theme) => theme.palette[color] ? theme.palette[color].light + '1A' : 'rgba(0,0,0,0.05)', // Light background tint
-      borderLeft: `4px solid ${color === 'default'}`, // Colored left border
+      backgroundColor: (theme) =>
+        theme.palette[color]
+          ? theme.palette[color].light + "1A"
+          : "rgba(0,0,0,0.05)", // Light background tint
+      borderLeft: `4px solid ${color === "default"}`, // Colored left border
     }}
   >
     <Stack direction="row" alignItems="center" spacing={1}>
-      {IconComponent && <IconComponent sx={{ color: (theme) => theme.palette[color] ? theme.palette[color].main : '#000' }} />}
-      <Typography variant="body1" sx={{ fontWeight: 'medium', color: 'text.secondary' }}>
+      {IconComponent && (
+        <IconComponent
+          sx={{
+            color: (theme) =>
+              theme.palette[color] ? theme.palette[color].main : "#000",
+          }}
+        />
+      )}
+      <Typography
+        variant="body1"
+        sx={{ fontWeight: "medium", color: "text.secondary" }}
+      >
         {label}
       </Typography>
     </Stack>
-    <Typography variant="h6" sx={{ fontWeight: 'bold', color: (theme) => theme.palette[color] ? theme.palette[color].dark : '#000' }}>
-      {value !== undefined && value !== null ? value : '-'}
+    <Typography
+      variant="h6"
+      sx={{
+        fontWeight: "bold",
+        color: (theme) =>
+          theme.palette[color] ? theme.palette[color].dark : "#000",
+      }}
+    >
+      {value !== undefined && value !== null ? value : "-"}
     </Typography>
   </Stack>
 );
@@ -133,29 +151,35 @@ function TaskAnalyticsDialog({
           borderRadius: 3, // More rounded corners
           boxShadow: 8, // Stronger shadow
           minHeight: "400px",
-          overflowY: 'hidden', // Prevent scrollbar on Paper itself
+          overflowY: "hidden", // Prevent scrollbar on Paper itself
         },
       }}
     >
-      <DialogTitle sx={{ pb: 1, borderBottom: '1px solid #eee' }}>
+      <DialogTitle sx={{ pb: 1, borderBottom: "1px solid #eee" }}>
         <Stack
           direction="row"
           justifyContent="space-between"
           alignItems="center"
         >
-          <Typography variant="h5" component="h2" sx={{ fontWeight: 'bold', color: 'primary.main' }}>
+          <Typography
+            variant="h5"
+            component="h2"
+            sx={{ fontWeight: "bold", color: "primary.main" }}
+          >
             Task Analytics Overview
           </Typography>
           <IconButton
             aria-label="close analytics modal"
             onClick={handleCloseAnalyticsModal}
-            sx={{ color: 'text.secondary', '&:hover': { color: 'error.main' } }}
+            sx={{ color: "text.secondary", "&:hover": { color: "error.main" } }}
           >
             <CloseIcon />
           </IconButton>
         </Stack>
       </DialogTitle>
-      <DialogContent dividers sx={{ p: 3 }}> {/* Increased padding */}
+      <DialogContent dividers sx={{ p: 3 }}>
+        {" "}
+        {/* Increased padding */}
         {analyticsLoading ? (
           <Box
             sx={{
@@ -165,7 +189,7 @@ function TaskAnalyticsDialog({
               alignItems: "center",
               minHeight: 250, // Adjusted min height for better centering
               gap: 2,
-              color: 'primary.main'
+              color: "primary.main",
             }}
           >
             <CircularProgress size={50} />
@@ -179,7 +203,11 @@ function TaskAnalyticsDialog({
             <Typography variant="body1" color="error.main" sx={{ mb: 2 }}>
               {analyticsError.message || "An unknown error occurred."}
             </Typography>
-            <Button onClick={fetchTaskAnalytics} variant="contained" color="error">
+            <Button
+              onClick={fetchTaskAnalytics}
+              variant="contained"
+              color="error"
+            >
               Retry Analytics
             </Button>
           </Box>
@@ -187,11 +215,22 @@ function TaskAnalyticsDialog({
           <Grid container spacing={3}>
             {/* Status Summary */}
             <Grid item xs={12} md={4}>
-              <Paper elevation={4} sx={{ p: 2.5, borderRadius: 2, border: '1px solid #e0e0e0' }}> {/* Enhanced Paper style */}
-                <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold', color: 'text.primary' }}>
+              <Paper
+                elevation={4}
+                sx={{ p: 2.5, borderRadius: 2, border: "1px solid #e0e0e0" }}
+              >
+                {" "}
+                {/* Enhanced Paper style */}
+                <Typography
+                  variant="h6"
+                  gutterBottom
+                  sx={{ fontWeight: "bold", color: "text.primary" }}
+                >
                   Status Summary
                 </Typography>
-                <Stack spacing={1.5}> {/* Increased spacing */}
+                <Stack spacing={1.5}>
+                  {" "}
+                  {/* Increased spacing */}
                   <AnalyticsMetric
                     label="Pending"
                     value={taskAnalytics.statusSummary?.pending}
@@ -216,8 +255,15 @@ function TaskAnalyticsDialog({
 
             {/* Priority Summary */}
             <Grid item xs={12} md={4}>
-              <Paper elevation={4} sx={{ p: 2.5, borderRadius: 2, border: '1px solid #e0e0e0' }}>
-                <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold', color: 'text.primary' }}>
+              <Paper
+                elevation={4}
+                sx={{ p: 2.5, borderRadius: 2, border: "1px solid #e0e0e0" }}
+              >
+                <Typography
+                  variant="h6"
+                  gutterBottom
+                  sx={{ fontWeight: "bold", color: "text.primary" }}
+                >
                   Priority Summary
                 </Typography>
                 <Stack spacing={1.5}>
@@ -251,8 +297,15 @@ function TaskAnalyticsDialog({
 
             {/* Overall Metrics */}
             <Grid item xs={12} md={4}>
-              <Paper elevation={4} sx={{ p: 2.5, borderRadius: 2, border: '1px solid #e0e0e0' }}>
-                <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold', color: 'text.primary' }}>
+              <Paper
+                elevation={4}
+                sx={{ p: 2.5, borderRadius: 2, border: "1px solid #e0e0e0" }}
+              >
+                <Typography
+                  variant="h6"
+                  gutterBottom
+                  sx={{ fontWeight: "bold", color: "text.primary" }}
+                >
                   Overall Metrics
                 </Typography>
                 <Stack spacing={1.5}>
@@ -279,7 +332,17 @@ function TaskAnalyticsDialog({
             </Grid>
           </Grid>
         ) : (
-          <Box sx={{ textAlign: "center", p: 4, minHeight: 200, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
+          <Box
+            sx={{
+              textAlign: "center",
+              p: 4,
+              minHeight: 200,
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "center",
+              alignItems: "center",
+            }}
+          >
             <Typography variant="h6" color="text.secondary" gutterBottom>
               No analytics data available.
             </Typography>
@@ -289,15 +352,19 @@ function TaskAnalyticsDialog({
           </Box>
         )}
       </DialogContent>
-      <DialogActions sx={{ p: 2, borderTop: '1px solid #eee' }}>
-        <Button onClick={handleCloseAnalyticsModal} variant="contained" color="primary" sx={{ px: 3, py: 1, borderRadius: 2 }}>
+      <DialogActions sx={{ p: 2, borderTop: "1px solid #eee" }}>
+        <Button
+          onClick={handleCloseAnalyticsModal}
+          variant="contained"
+          color="primary"
+          sx={{ px: 3, py: 1, borderRadius: 2 }}
+        >
           Close
         </Button>
       </DialogActions>
     </Dialog>
   );
 }
-
 
 export default function TaskUserId() {
   const params = useParams();

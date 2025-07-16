@@ -5,7 +5,7 @@ import { Add as AddIcon } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import UserModal from "../modals/UserModal";
 import ActionMenu from "../components/ActionMenu";
-import  {useUserData}  from "../hooks/useUserdata";
+import { useUserData } from "../hooks/useUserdata";
 
 export default function UserTable() {
   const navigate = useNavigate();
@@ -15,6 +15,7 @@ export default function UserTable() {
     createUser,
     updateUser,
     deleteUser,
+    fetchUsers,
     createLoading,
     snackbar,
     handleCloseSnackbar,
@@ -24,6 +25,15 @@ export default function UserTable() {
   const [editMode, setEditMode] = React.useState(false);
   const [editUserId, setEditUserId] = React.useState(null);
   const [editUserData, setEditUserData] = React.useState(null);
+
+  const [page, setPage] = React.useState(0);
+  const [rowsPerPage, setRowsPerPage] = React.useState(10);
+
+  const pageSizeOptions = [5, 10, 25, 50, 100];
+
+  React.useEffect(() => {
+    fetchUsers(page + 1, rowsPerPage);
+  }, [page, rowsPerPage, fetchUsers]);
 
   const handleCreateUser = () => {
     setEditMode(false);
@@ -52,6 +62,7 @@ export default function UserTable() {
     } else {
       await createUser(userData);
     }
+    fetchUsers(page + 1, rowsPerPage);
     handleModalClose();
   };
 
@@ -109,7 +120,6 @@ export default function UserTable() {
   return (
     <Box sx={{ width: "100%", height: "100%" }}>
       <Paper sx={{ width: "100%", height: "100%" }}>
-        {/* Header */}
         <Box
           sx={{
             display: "flex",
@@ -133,21 +143,66 @@ export default function UserTable() {
           </Button>
         </Box>
 
-        {/* DataGrid */}
-        <Box sx={{ height: "90%" }}>
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "flex-end",
+            alignItems: "center",
+            p: 2,
+          }}
+        >
+          <Typography variant="body2" sx={{ mr: 1 }}>
+            Rows per page:
+          </Typography>
+          <Box sx={{ display: "flex", gap: 1 }}>
+            {pageSizeOptions.map((option) => (
+              <Typography
+                key={option}
+                variant="body2"
+                sx={{
+                  border: "1px solid",
+                  borderColor:
+                    rowsPerPage === option ? "primary.main" : "transperent",
+                  borderRadius: 1,
+                  p: "4px 8px",
+                  cursor: "pointer",
+                  backgroundColor:
+                    rowsPerPage === option ? "primary.light" : "transparent",
+                  color:
+                    rowsPerPage === option
+                      ? "primary.contrastText"
+                      : "text.primary",
+                  "&:hover": {
+                    backgroundColor: "action.hover",
+                  },
+                }}
+                onClick={() => {
+                  setRowsPerPage(option);
+                  setPage(0);
+                }}
+              >
+                {option}
+              </Typography>
+            ))}
+          </Box>
+        </Box>
+
+        <Box sx={{ height: "50%" }}>
           <DataGrid
             rows={users}
             columns={columns}
             loading={loading}
-            pageSizeOptions={[5, 10, 25]}
-            initialState={{
-              pagination: {
-                paginationModel: { page: 0, pageSize: 10 },
-              },
-            }}
             checkboxSelection={false}
             disableRowSelectionOnClick
             onRowClick={handleUserClick}
+            rowCount={users.length}
+            paginationMode="server"
+            paginationModel={{ page, pageSize: rowsPerPage }}
+            onPaginationModelChange={(model) => {
+              setPage(model.page);
+              setRowsPerPage(model.pageSize);
+            }}
+            pageSizeOptions={pageSizeOptions}
             sx={{
               border: "none",
               "& .MuiDataGrid-cell:focus": {
