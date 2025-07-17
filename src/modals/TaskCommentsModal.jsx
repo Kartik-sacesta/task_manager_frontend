@@ -31,7 +31,7 @@ function TaskCommentsModal({ open, onClose, taskId, showSnackbar }) {
 
   const fetchComments = React.useCallback(async () => {
     if (!taskId) return;
-    setLoadingComments(true);
+   
     try {
       const token = localStorage.getItem("authtoken");
       const response = await axios.get(
@@ -42,7 +42,7 @@ function TaskCommentsModal({ open, onClose, taskId, showSnackbar }) {
           },
         }
       );
-console.log(response);
+      console.log(response);
       if (response.status === 200) {
         setComments(Array.isArray(response.data) ? response.data : []);
       } else {
@@ -119,7 +119,7 @@ console.log(response);
           },
         }
       );
-console.log(response);
+      console.log(response);
       if (response.status === 200 || response.status === 204) {
         showSnackbar("Comment deleted successfully!");
         fetchComments();
@@ -184,17 +184,26 @@ console.log(response);
                   }}
                 >
                   <ListItemText
-                 
                     secondary={
                       <React.Fragment>
+                        
+                      
                         <Typography
-                          sx={{ display: "block" }}
+                          sx={{ display: "block" ,fontWeight: 'bold',fontSize:20}}
+                          component="span"
+                          variant="body2"
+                          color="text.primary"
+                        >
+                          {comment.comments}{" "}
+                        </Typography>
+                        <Typography
+                          sx={{ display: "block" ,fontWeight: 'bold',fontSize:15}}
                           component="span"
                           variant="body2"
                           color="text.secondary"
+                          
                         >
-                          {comment.comments}{" "}
-                          {/* Assuming comment text is 'comment' field */}
+                          {comment.created_by_name}{" "}  As  {comment.created_by_role}{" "}
                         </Typography>
                         <Typography
                           sx={{ display: "block" }}
