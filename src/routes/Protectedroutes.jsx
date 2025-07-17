@@ -14,6 +14,7 @@ import Task from "../pages/Taskpage";
 import NotificationsPage from "../pages/Notificationpage";
 import Categorypage from "../pages/Categorypage";
 import { useMediaQuery, useTheme } from "@mui/material";
+import PaymentModule from "../pages/PaymentModule";
 
 function ProtectedLayout() {
   const theme = useTheme();
@@ -39,6 +40,7 @@ export default function Protectedroutes() {
         <Route path="/task" element={<Task />} />
         <Route path="/category" element={<Categorypage/>} />
         <Route path="/notification" element={<NotificationsPage />} />
+                <Route path="/payment" element={<PaymentModule />} />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Route>
     </Routes>
