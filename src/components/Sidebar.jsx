@@ -28,7 +28,7 @@ import {
   Menu as MenuIcon,
   ChevronLeft as ChevronLeftIcon,
 } from "@mui/icons-material";
-import PaymentIcon from '@mui/icons-material/Payment';
+import PaymentIcon from "@mui/icons-material/Payment";
 const SIDEBAR_WIDTH = 280;
 const COLLAPSED_SIDEBAR_WIDTH = 70;
 
@@ -70,7 +70,7 @@ const Sidebar = () => {
       icon: <NotificationsIcon />,
       roles: ["User"],
     },
-     {
+    {
       path: "/payment",
       label: "Payment",
       icon: <PaymentIcon />,

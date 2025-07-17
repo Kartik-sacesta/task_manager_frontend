@@ -3,6 +3,7 @@ import LoginPage from "../pages/Loginpage";
 import { Box, Button, Grid } from "@mui/material";
 import Adminloginpage from "../pages/Adminloginpage";
 import { useNavigate } from "react-router-dom";
+import Commonskeleton from "../skeleton/Commonskeleton";
 function PublicLayout() {
   return (
     <div style={{ display: "flex", height: "100vh" }}>

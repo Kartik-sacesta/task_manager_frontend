@@ -144,7 +144,7 @@ const useCategoriesApi = () => {
     }
   }, [fetchSubCategories]);
 
-  const updateSubCategory = useCallback(async (subCategoryId, subCategoryData, parentCategoryId) => {
+  const updateSubCategory = useCallback(async (subCategoryId, subCategoryData) => {
     setLoading(true);
     setError(null);
     try {
@@ -155,7 +155,7 @@ const useCategoriesApi = () => {
         },
       });
       if (response.data.success) {
-        await fetchSubCategories(parentCategoryId);
+        await fetchSubCategories();
       } else {
         throw new Error(response.data.message || "Failed to update subcategory");
       }
@@ -167,7 +167,7 @@ const useCategoriesApi = () => {
     }
   }, [fetchSubCategories]);
 
-  const deleteSubCategory = useCallback(async (subCategoryId, parentCategoryId) => {
+  const deleteSubCategory = useCallback(async (subCategoryId)=> {
     setLoading(true);
     setError(null);
     try {
@@ -177,7 +177,7 @@ const useCategoriesApi = () => {
         },
       });
       if (response.data.success) {
-        await fetchSubCategories(parentCategoryId);
+        await fetchSubCategories();
       } else {
         throw new Error(response.data.message || "Failed to delete subcategory");
       }

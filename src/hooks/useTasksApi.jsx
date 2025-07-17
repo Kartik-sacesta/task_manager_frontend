@@ -106,12 +106,13 @@ const useTasksApi = (showSnackbar) => {
           Authorization: `Bearer ${token}`,
         },
       });
+   
       if (response.status === 200) {
         if (showSnackbar) {
           showSnackbar("Task updated successfully!");
         }
         fetchTasks();
-        return true;
+  
       } else {
         throw new Error(response.data?.message || "Failed to update task");
       }
@@ -125,7 +126,7 @@ const useTasksApi = (showSnackbar) => {
           "error"
         );
       }
-      return false;
+    
     } finally {
       setCreateLoading(false);
     }

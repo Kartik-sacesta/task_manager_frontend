@@ -20,9 +20,15 @@ function ProtectedLayout() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   return (
-    <div style={{ display: "flex", height: "100vh" ,}}>
+    <div style={{ display: "flex", height: "100vh" }}>
       <Sidebar />
-      <main style={{ flex: 1, overflow: "auto",paddingLeft: isMobile ? "10px" : "290px" }}>
+      <main
+        style={{
+          flex: 1,
+          overflow: "auto",
+          paddingLeft: isMobile ? "10px" : "290px",
+        }}
+      >
         <Outlet />
       </main>
     </div>
@@ -38,10 +44,9 @@ export default function Protectedroutes() {
         <Route path="/user/:id" element={<Taskuserid />} />
         <Route path="/user" element={<User />} />
         <Route path="/task" element={<Task />} />
-        <Route path="/category" element={<Categorypage/>} />
+        <Route path="/category" element={<Categorypage />} />
         <Route path="/notification" element={<NotificationsPage />} />
-                <Route path="/payment" element={<PaymentModule />} />
-        <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        <Route path="/payment" element={<PaymentModule />} />
       </Route>
     </Routes>
   );

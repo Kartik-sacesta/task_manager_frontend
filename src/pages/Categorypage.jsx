@@ -124,7 +124,7 @@ const Categorypage = () => {
       await updateSubCategory(
         subCategoryData.id,
         subCategoryData,
-        subCategoryData.category_id
+        
       );
       setSubCategoryDialog({ open: false, mode: "create", data: null });
       showNotification("SubCategory updated successfully");
@@ -133,38 +133,16 @@ const Categorypage = () => {
     }
   };
 
-  const handleDeleteSubCategory = async (subCategoryId, parentCategoryId) => {
+  const handleDeleteSubCategory = async (subCategoryId) => {
     try {
-      await deleteSubCategory(subCategoryId, parentCategoryId);
+      await deleteSubCategory(subCategoryId);
       showNotification("SubCategory deleted successfully");
     } catch (err) {
       showNotification(`Failed to delete subcategory: ${err.message}`, "error");
     }
   };
 
-  const handleToggleSubCategoryStatus = async (
-    subCategoryId,
-    parentCategoryId
-  ) => {
-    try {
-      const subCategoryToUpdate = subCategories.find(
-        (subCat) => subCat.id === subCategoryId
-      );
-      if (subCategoryToUpdate) {
-        const updatedData = {
-          ...subCategoryToUpdate,
-          is_active: !subCategoryToUpdate.is_active,
-        };
-        await updateSubCategory(subCategoryId, updatedData, parentCategoryId);
-        showNotification("SubCategory status updated successfully");
-      }
-    } catch (err) {
-      showNotification(
-        `Failed to update subcategory status: ${err.message}`,
-        "error"
-      );
-    }
-  };
+
 
   const getCategoryName = (categoryId) => {
     const category = categories.find((cat) => cat.id === categoryId);
@@ -228,13 +206,7 @@ const Categorypage = () => {
     handleSubCategoryMenuClose();
   };
 
-  const handleSubCategoryToggleStatusClick = () => {
-    handleToggleSubCategoryStatus(
-      selectedSubCategoryRow.id,
-      selectedSubCategoryRow.category_id
-    );
-    handleSubCategoryMenuClose();
-  };
+
 
   const handleSubCategoryDeleteClick = () => {
     handleDeleteSubCategory(
@@ -366,14 +338,7 @@ const Categorypage = () => {
             <MenuItem onClick={handleSubCategoryEditClick}>
               <EditIcon sx={{ mr: 1 }} /> Edit
             </MenuItem>
-            <MenuItem onClick={handleSubCategoryToggleStatusClick}>
-              {selectedSubCategoryRow?.is_active ? (
-                <VisibilityOffIcon sx={{ mr: 1 }} />
-              ) : (
-                <ViewIcon sx={{ mr: 1 }} />
-              )}
-              {selectedSubCategoryRow?.is_active ? "Deactivate" : "Activate"}
-            </MenuItem>
+           
             <MenuItem onClick={handleSubCategoryDeleteClick}>
               <DeleteIcon sx={{ mr: 1 }} /> Delete
             </MenuItem>
